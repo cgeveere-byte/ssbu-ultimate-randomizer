@@ -1,0 +1,15 @@
+node_modules
+dist
+.vercel
+.output
+screenshots
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
+.project_id
+.node_modules.lock
+AGENTS.md
+.grok
+vendor

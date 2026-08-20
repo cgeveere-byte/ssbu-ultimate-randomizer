@@ -1,0 +1,134 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --color-bg: #0a0a0b;
+  --color-bg-elevated: #121214;
+  --color-bg-subtle: #1a1a1e;
+  --color-bg-hover: #222228;
+  --color-fg: #f4f4f5;
+  --color-fg-muted: #a1a1aa;
+  --color-fg-subtle: #71717a;
+  --color-border: color-mix(in oklab, #f4f4f5 12%, transparent);
+  --color-border-strong: color-mix(in oklab, #f4f4f5 22%, transparent);
+  --color-accent: #d4d8e0;
+  --color-accent-fg: #0a0a0b;
+  --color-danger: #e07a6a;
+  --color-danger-bg: color-mix(in oklab, #e07a6a 14%, transparent);
+  --color-success: #6ab89a;
+  --color-success-bg: color-mix(in oklab, #6ab89a 14%, transparent);
+  --color-warn: #c4a46a;
+  --color-warn-bg: color-mix(in oklab, #c4a46a 14%, transparent);
+  --color-often: #7a9ec4;
+  --color-often-bg: color-mix(in oklab, #7a9ec4 16%, transparent);
+  --color-favorite: #e8eaef;
+  --color-favorite-bg: color-mix(in oklab, #e8eaef 12%, transparent);
+  --color-rare: #8a8a96;
+  --color-rare-bg: color-mix(in oklab, #8a8a96 14%, transparent);
+
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
+
+  --shadow-soft: 0 12px 40px color-mix(in oklab, #000 45%, transparent);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes reel-blur {
+  0% {
+    filter: blur(0);
+    transform: scale(1);
+  }
+  40% {
+    filter: blur(2px);
+    transform: scale(0.98);
+  }
+  100% {
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+
+@keyframes result-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-accent) 35%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.animate-reel {
+  animation: reel-blur 90ms ease-out;
+}
+
+.animate-result-in {
+  animation: result-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reel,
+  .animate-result-in,
+  .animate-pulse-ring {
+    animation: none !important;
+  }
+}

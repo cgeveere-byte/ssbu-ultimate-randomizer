@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Dices, Minus, Plus, X } from "lucide-react";
+import { Ban, Dices, Minus, Plus, RotateCcw, Users, X } from "lucide-react";
 import { FighterMonogram } from "@/components/fighter-tile";
 import {
   type Fighter,
@@ -12,7 +12,8 @@ import { cn } from "@/lib/cn";
 
 /**
  * Full-screen party mode: big hit targets, no weight/profile editing.
- * Settings stay whatever was configured in the main UI.
+ * Optional 2-player face-off (chess-clock) layout: one side upright for you,
+ * the opposite side rotated 180° so it faces your opponent across the table.
  */
 export function GameMode({ onExit }: { onExit: () => void }) {
   const playerCount = useRandomizerStore((s) => s.playerCount);
@@ -33,6 +34,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
   const [displayPicks, setDisplayPicks] = useState<PlayerPick[]>([]);
   const [revealed, setRevealed] = useState(false);
   const [reelKey, setReelKey] = useState(0);
+  const [faceOff, setFaceOff] = useState(false);
   const timers = useRef<number[]>([]);
 
   const active = profiles.find((p) => p.id === activeProfileId) ?? profiles[0];
@@ -61,6 +63,13 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     }
     return playerCount > 0;
   }, [playerCount, getPlayerProfileId, getProfile]);
+
+  // Face-off only makes sense with exactly 2 players
+  useEffect(() => {
+    if (faceOff && playerCount !== 2) {
+      setFaceOff(false);
+    }
+  }, [faceOff, playerCount]);
 
   useEffect(() => {
     return () => {
@@ -169,9 +178,129 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     setSpinning,
   ]);
 
+  const enableFaceOff = () => {
+    if (playerCount !== 2) setPlayerCount(2);
+    setFaceOff(true);
+  };
+
+  const disableFaceOff = () => setFaceOff(false);
+
   const shown = displayPicks.length > 0 ? displayPicks : lastPicks;
   const cols = Math.min(shown.length || playerCount, 4);
 
+  // ── Face-off (chess-clock) layout ──────────────────────────────────────
+  if (faceOff && playerCount === 2) {
+    const p1 = shown[0] ?? null;
+    const p2 = shown[1] ?? null;
+
+    return (
+      <div
+        className="fixed inset-0 z-[80] flex flex-col bg-bg text-fg"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Game mode face-off"
+      >
+        {/* Opponent half — rotated 180° so it faces them across the table */}
+        <div
+          className="relative flex min-h-0 flex-1 flex-col"
+          style={{ transform: "rotate(180deg)" }}
+        >
+          <FaceOffHalf
+            pick={p2}
+            playerIndex={1}
+            isSpinning={isSpinning}
+            revealed={revealed}
+            reelKey={reelKey}
+            perPlayerProfiles={perPlayerProfiles}
+            emptyHint="Waiting…"
+          />
+        </div>
+
+        {/* Shared control strip in the middle (readable from either side) */}
+        <div className="relative z-10 shrink-0 border-y border-border bg-bg-elevated px-3 py-2.5 sm:px-4">
+          <div className="mx-auto flex w-full max-w-lg flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={onExit}
+                disabled={isSpinning}
+                className="flex h-11 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted transition-colors hover:border-border-strong hover:text-fg disabled:opacity-40"
+                aria-label="Exit game mode"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2} />
+                Exit
+              </button>
+
+              <button
+                type="button"
+                disabled={isSpinning}
+                onClick={disableFaceOff}
+                className="flex h-11 items-center gap-1.5 rounded-[var(--radius-md)] border border-border-strong bg-bg-subtle px-2.5 text-xs font-semibold text-fg transition-colors hover:bg-bg disabled:opacity-40"
+                title="Switch back to standard layout"
+              >
+                <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
+                Standard
+              </button>
+
+              <button
+                type="button"
+                disabled={isSpinning}
+                onClick={() => setUniqueOnly(!uniqueOnly)}
+                className={cn(
+                  "flex h-11 items-center rounded-[var(--radius-md)] border px-2.5 text-xs font-semibold transition-colors",
+                  uniqueOnly
+                    ? "border-border-strong bg-bg-subtle text-fg"
+                    : "border-border bg-bg text-fg-muted",
+                )}
+              >
+                {uniqueOnly ? "Unique" : "Dupes OK"}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={spin}
+              disabled={isSpinning || !canRoll}
+              className={cn(
+                "flex h-14 w-full items-center justify-center gap-2.5 rounded-[var(--radius-xl)] text-lg font-bold tracking-tight transition-[opacity,transform] duration-150 active:scale-[0.99]",
+                "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30",
+                "disabled:pointer-events-none disabled:opacity-45",
+              )}
+            >
+              {isSpinning ? (
+                "Spinning…"
+              ) : !canRoll ? (
+                <>
+                  <Ban className="h-5 w-5" />
+                  No fighters
+                </>
+              ) : (
+                <>
+                  <Dices className="h-5 w-5" strokeWidth={2} />
+                  Randomize
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Your half — normal orientation */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <FaceOffHalf
+            pick={p1}
+            playerIndex={0}
+            isSpinning={isSpinning}
+            revealed={revealed}
+            reelKey={reelKey}
+            perPlayerProfiles={perPlayerProfiles}
+            emptyHint="Tap Randomize"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Standard multi-player layout ───────────────────────────────────────
   return (
     <div
       className="fixed inset-0 z-[80] flex flex-col bg-bg text-fg"
@@ -277,8 +406,8 @@ export function GameMode({ onExit }: { onExit: () => void }) {
       {/* Bottom controls — big, hard to miss, away from Exit */}
       <div className="shrink-0 border-t border-border bg-bg-elevated px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
-          {/* Player count — large taps */}
-          <div className="flex items-center justify-center gap-3">
+          {/* Player count + face-off toggle */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <button
               type="button"
               disabled={playerCount <= 1 || isSpinning}
@@ -288,7 +417,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             >
               <Minus className="h-6 w-6" strokeWidth={2.25} />
             </button>
-            <div className="flex min-w-[7rem] flex-col items-center">
+            <div className="flex min-w-[5.5rem] flex-col items-center">
               <span className="text-xs uppercase tracking-wide text-fg-subtle">
                 Players
               </span>
@@ -313,13 +442,26 @@ export function GameMode({ onExit }: { onExit: () => void }) {
               disabled={isSpinning}
               onClick={() => setUniqueOnly(!uniqueOnly)}
               className={cn(
-                "ml-1 flex h-14 items-center rounded-[var(--radius-lg)] border px-4 text-sm font-semibold transition-colors",
+                "flex h-14 items-center rounded-[var(--radius-lg)] border px-3 text-sm font-semibold transition-colors sm:px-4",
                 uniqueOnly
                   ? "border-border-strong bg-bg-subtle text-fg"
                   : "border-border bg-bg text-fg-muted",
               )}
             >
               {uniqueOnly ? "Unique" : "Dupes OK"}
+            </button>
+            <button
+              type="button"
+              disabled={isSpinning}
+              onClick={enableFaceOff}
+              className={cn(
+                "flex h-14 items-center gap-1.5 rounded-[var(--radius-lg)] border px-3 text-sm font-semibold transition-colors sm:px-4",
+                "border-border-strong bg-bg-subtle text-fg hover:bg-bg",
+              )}
+              title="2-player face-off: one side faces you, the other faces your opponent (chess-clock style)"
+            >
+              <Users className="h-4 w-4" strokeWidth={2} />
+              Face-off
             </button>
           </div>
 
@@ -349,6 +491,93 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             )}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** One half of the face-off (chess-clock) screen. */
+function FaceOffHalf({
+  pick,
+  playerIndex,
+  isSpinning,
+  revealed,
+  reelKey,
+  perPlayerProfiles,
+  emptyHint,
+}: {
+  pick: PlayerPick | null;
+  playerIndex: number;
+  isSpinning: boolean;
+  revealed: boolean;
+  reelKey: number;
+  perPlayerProfiles: boolean;
+  emptyHint: string;
+}) {
+  const pc = playerColor(playerIndex);
+
+  return (
+    <div
+      className="flex h-full min-h-0 flex-1 flex-col items-center justify-center px-4 py-3"
+      style={{
+        background: `linear-gradient(180deg, ${pc.soft} 0%, transparent 55%)`,
+      }}
+    >
+      <div
+        key={
+          pick
+            ? revealed
+              ? `final-${pick.fighter.id}`
+              : `reel-${reelKey}-${playerIndex}`
+            : "empty"
+        }
+        className={cn(
+          "flex w-full max-w-sm flex-col items-center justify-center gap-3 rounded-[var(--radius-xl)] border-2 px-4 py-5 sm:gap-4 sm:py-6",
+          isSpinning && "animate-reel",
+          revealed && pick && "animate-result-in",
+        )}
+        style={{
+          borderColor: pc.hex,
+          boxShadow: `0 0 0 1px ${pc.soft}, 0 12px 40px color-mix(in oklab, #000 35%, transparent)`,
+          background: "color-mix(in oklab, var(--color-bg-elevated) 92%, transparent)",
+        }}
+      >
+        <span
+          className="inline-flex h-9 items-center rounded-full px-4 text-base font-bold uppercase tracking-wider"
+          style={{ background: pc.hex, color: playerBadgeFg(playerIndex) }}
+        >
+          P{playerIndex + 1}
+        </span>
+
+        {pick ? (
+          <>
+            <FighterMonogram
+              fighter={pick.fighter}
+              size="xl"
+              className="!h-24 !w-24 !text-4xl sm:!h-28 sm:!w-28 sm:!text-5xl"
+            />
+            <div className="w-full text-center">
+              <p className="line-clamp-2 text-2xl font-semibold leading-tight tracking-tight text-fg sm:text-3xl">
+                {pick.fighter.name}
+              </p>
+              <p className="mt-1 truncate text-base text-fg-subtle sm:text-lg">
+                {pick.fighter.seriesLabel}
+              </p>
+              {perPlayerProfiles && (
+                <p className="mt-1 truncate text-sm text-fg-muted">
+                  {pick.profileName}
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-[var(--radius-lg)] border border-border bg-bg text-fg-subtle sm:h-24 sm:w-24">
+              <Dices className="h-10 w-10 sm:h-12 sm:w-12" strokeWidth={1.4} />
+            </div>
+            <p className="text-base text-fg-muted">{emptyHint}</p>
+          </div>
+        )}
       </div>
     </div>
   );

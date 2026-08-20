@@ -1,12 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Dices, SlidersHorizontal } from "lucide-react";
+import { Dices, Maximize2, SlidersHorizontal } from "lucide-react";
 import { Toaster } from "sonner";
 import { ClientOnly } from "@/components/client-only";
 import { RandomizerStage } from "@/components/randomizer-stage";
 import { RosterPanel } from "@/components/roster-panel";
 import { HistoryPanel } from "@/components/history-panel";
 import { ProfilesPanel } from "@/components/profiles-panel";
+import { GameMode } from "@/components/game-mode";
 import { ROSTER } from "@/lib/roster";
 import { useRandomizerStore } from "@/lib/store";
 import { cn } from "@/lib/cn";
@@ -19,10 +20,26 @@ type AppTab = "randomize" | "profiles";
 
 function AppShell() {
   const [tab, setTab] = useState<AppTab>("randomize");
+  const [gameMode, setGameMode] = useState(false);
   const profiles = useRandomizerStore((s) => s.profiles);
   const activeProfileId = useRandomizerStore((s) => s.activeProfileId);
   const activeName =
     profiles.find((p) => p.id === activeProfileId)?.name ?? "Default";
+
+  if (gameMode) {
+    return (
+      <>
+        <GameMode onExit={() => setGameMode(false)} />
+        <Toaster
+          theme="dark"
+          position="bottom-center"
+          toastOptions={{
+            className: "!bg-bg-elevated !border-border !text-fg",
+          }}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -49,17 +66,29 @@ function AppShell() {
             />
           </div>
 
-          {tab === "randomize" && (
-            <button
-              type="button"
-              onClick={() => setTab("profiles")}
-              className="flex h-10 items-center justify-between gap-3 rounded-[var(--radius-md)] border border-border bg-bg-elevated px-3 text-left text-xs transition-colors duration-150 hover:border-border-strong hover:bg-bg-subtle sm:max-w-xs sm:justify-start"
-            >
-              <span className="text-fg-subtle">Active profile</span>
-              <span className="truncate font-medium text-fg">{activeName}</span>
-              <span className="shrink-0 text-fg-muted">Edit →</span>
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {tab === "randomize" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setGameMode(true)}
+                  className="flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-border-strong bg-accent px-3 text-xs font-semibold text-accent-fg transition-opacity duration-150 hover:opacity-90"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
+                  Game mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("profiles")}
+                  className="flex h-10 items-center justify-between gap-3 rounded-[var(--radius-md)] border border-border bg-bg-elevated px-3 text-left text-xs transition-colors duration-150 hover:border-border-strong hover:bg-bg-subtle sm:max-w-xs sm:justify-start"
+                >
+                  <span className="text-fg-subtle">Active profile</span>
+                  <span className="truncate font-medium text-fg">{activeName}</span>
+                  <span className="shrink-0 text-fg-muted">Edit →</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {tab === "randomize" ? (

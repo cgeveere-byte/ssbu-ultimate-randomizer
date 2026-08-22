@@ -128,6 +128,16 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     setP2Stocks(null);
   };
 
+  const selectP1Stocks = (n: number) => {
+    setP1Stocks(n);
+    if (n > 0) setP2Stocks((prev) => (prev == null ? 0 : prev));
+  };
+
+  const selectP2Stocks = (n: number) => {
+    setP2Stocks(n);
+    if (n > 0) setP1Stocks((prev) => (prev == null ? 0 : prev));
+  };
+
   const flashPool = useCallback((): Fighter[] => {
     const s = useRandomizerStore.getState();
     const ids = new Set<string>();
@@ -268,7 +278,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             perPlayerProfiles={perPlayerProfiles}
             emptyHint="Waiting…"
             stocks={p2Stocks}
-            onSelectStocks={setP2Stocks}
+            onSelectStocks={selectP2Stocks}
             wins={p2Wins}
             losses={p1Wins}
           />
@@ -407,7 +417,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             perPlayerProfiles={perPlayerProfiles}
             emptyHint="Tap Randomize"
             stocks={p1Stocks}
-            onSelectStocks={setP1Stocks}
+            onSelectStocks={selectP1Stocks}
             wins={p1Wins}
             losses={p2Wins}
           />

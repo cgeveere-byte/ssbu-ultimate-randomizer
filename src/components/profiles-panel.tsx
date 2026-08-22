@@ -5,10 +5,12 @@ import {
   Lock,
   Pencil,
   Plus,
+  RotateCcw,
   Trash2,
   Check,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProfileTransferMenus } from "@/components/profile-transfer-menus";
@@ -31,6 +33,7 @@ export function ProfilesPanel() {
   const renameProfile = useRandomizerStore((s) => s.renameProfile);
   const deleteProfile = useRandomizerStore((s) => s.deleteProfile);
   const importProfiles = useRandomizerStore((s) => s.importProfiles);
+  const resetAllData = useRandomizerStore((s) => s.resetAllData);
   const isSpinning = useRandomizerStore((s) => s.isSpinning);
 
   const [renaming, setRenaming] = useState(false);
@@ -231,6 +234,36 @@ export function ProfilesPanel() {
         Total weight {Number.isInteger(odds.total) ? odds.total : odds.total.toFixed(1)} ·{" "}
         {odds.eligible} eligible
       </p>
+
+      <div className="mt-6 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-medium text-fg">Reset all data</p>
+          <p className="mt-0.5 text-xs text-fg-muted">
+            Clears custom profiles, history, stock scores, unique bags, and settings.
+            Built-in Default and Smash 64 stay.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={isSpinning}
+          onClick={() => {
+            const first = window.confirm(
+              "Reset all app data?\n\nThis removes custom profiles, roll history, stock scores, unique bags, and settings. Built-in Default and Smash 64 stay.\n\nThis cannot be undone.",
+            );
+            if (!first) return;
+            const second = window.confirm(
+              "Last chance: really reset everything?",
+            );
+            if (!second) return;
+            resetAllData();
+            toast.success("All data reset");
+          }}
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Reset all data
+        </Button>
+      </div>
     </section>
   );
 }

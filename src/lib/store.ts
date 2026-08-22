@@ -156,6 +156,7 @@ interface RandomizerState {
   roll: () => PlayerPick[];
   importProfiles: (incoming: WeightProfile[], mode: "merge" | "replace") => number;
   getProfilesForExport: (ids?: string[]) => WeightProfile[];
+  resetAllData: () => void;
 }
 
 function updateActiveProfile(
@@ -563,6 +564,26 @@ export const useRandomizerStore = create<RandomizerState>()(
         const s = get();
         if (!ids || ids.length === 0) return ensureBuiltInProfiles(s.profiles);
         return s.profiles.filter((p) => ids.includes(p.id));
+      },
+
+      resetAllData: () => {
+        set({
+          profiles: ensureBuiltInProfiles([]),
+          activeProfileId: DEFAULT_PROFILE_ID,
+          perPlayerProfiles: true,
+          playerProfileIds: emptyPlayerProfiles(),
+          playerCount: 2,
+          uniqueOnly: true,
+          quickRolls: false,
+          usedFighterIds: emptyUsedFighters(),
+          search: "",
+          seriesFilter: "all",
+          showBanned: true,
+          lastPicks: [],
+          history: [],
+          isSpinning: false,
+          stockGames: [],
+        });
       },
     }),
     {

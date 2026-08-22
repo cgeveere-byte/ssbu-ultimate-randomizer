@@ -159,10 +159,10 @@ export const WEIGHT_PRESETS: {
   description: string;
 }[] = [
   { id: "never", label: "Never", short: "Off", multiplier: 0, description: "Excluded from the pool" },
-  { id: "rare", label: "Rare", short: "Rare", multiplier: 0.5, description: "Half chance" },
+  { id: "rare", label: "Rare", short: "Rare", multiplier: 0.25, description: "Quarter chance" },
   { id: "normal", label: "Normal", short: "Norm", multiplier: 1, description: "Default chance" },
-  { id: "often", label: "Often", short: "Often", multiplier: 1.5, description: "One and a half times" },
-  { id: "favorite", label: "Favorite", short: "Fav", multiplier: 2, description: "Double chance" },
+  { id: "often", label: "Often", short: "Often", multiplier: 2, description: "Double chance" },
+  { id: "favorite", label: "Favorite", short: "Fav", multiplier: 5, description: "Five times chance" },
 ];
 
 /** @deprecated use WEIGHT_PRESETS — alias for older imports */
@@ -177,6 +177,28 @@ const PRESET_BY_VALUE = new Map(
 );
 
 const PRESET_ORDER: WeightPreset[] = ["never", "rare", "normal", "often", "favorite"];
+
+/** Bump when preset multipliers change so saved profiles can be remapped once. */
+export const WEIGHT_PRESET_SCALE = 3;
+
+/** v2 scale: rare 0.5, often 1.5, favorite 2 → current rare 0.25, often 2, favorite 5. */
+export function remapLegacyPresetValue(value: number): number {
+  const v = clampWeight(value);
+  if (Math.abs(v - 2) < 1e-9) return 5;
+  if (Math.abs(v - 1.5) < 1e-9) return 2;
+  if (Math.abs(v - 0.5) < 1e-9) return 0.25;
+  return v;
+}
+
+export function remapLegacyWeightMap(
+  weights: Record<string, number>,
+): Record<string, number> {
+  const next: Record<string, number> = {};
+  for (const [id, value] of Object.entries(weights)) {
+    next[id] = remapLegacyPresetValue(value);
+  }
+  return next;
+}
 
 export function clampWeight(n: number): number {
   if (!Number.isFinite(n) || n < 0) return 0;
@@ -211,7 +233,7 @@ export function getWeightValue(
 
 export function resolveWeightLevel(value: number): WeightLevel {
   const v = clampWeight(value);
-  // Use approximate match so 0.5000001 still maps to rare
+  // Use approximate match so 0.2500001 still maps to rare
   for (const preset of WEIGHT_PRESETS) {
     if (Math.abs(preset.multiplier - v) < 1e-9) return preset.id;
   }

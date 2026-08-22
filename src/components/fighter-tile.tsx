@@ -6,6 +6,7 @@ import {
   type WeightLevel,
   type WeightPreset,
   WEIGHT_PRESETS,
+  WEIGHT_MAP,
   clampWeight,
   fighterTileStyle,
   formatMultiplier,
@@ -179,7 +180,7 @@ export function FighterCard({
   const level = resolveWeightLevel(effectiveWeight);
   const presetMeta = WEIGHT_PRESETS.find((w) => w.id === level);
   const banned = effectiveWeight <= 0;
-  const isFav = effectiveWeight >= 2;
+  const isFav = effectiveWeight >= WEIGHT_MAP.favorite;
   const isRare = effectiveWeight > 0 && effectiveWeight < 1;
   const label = isFav
     ? "Fav"

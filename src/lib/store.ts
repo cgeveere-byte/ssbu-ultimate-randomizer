@@ -9,6 +9,8 @@ import {
   cyclePresetValue,
   getWeightValue,
   pickWeighted,
+  remapLegacyWeightMap,
+  WEIGHT_PRESET_SCALE,
 } from "./roster";
 import {
   type WeightMap,
@@ -604,9 +606,21 @@ export const useRandomizerStore = create<RandomizerState>()(
       },
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<RandomizerState>;
-        const profiles = ensureBuiltInProfiles(
+        const profilesRaw = ensureBuiltInProfiles(
           Array.isArray(p.profiles) ? p.profiles : current.profiles,
         );
+        const scale =
+          typeof (p as { weightPresetScale?: unknown }).weightPresetScale === "number"
+            ? (p as { weightPresetScale: number }).weightPresetScale
+            : 2;
+        const profiles =
+          scale < WEIGHT_PRESET_SCALE
+            ? profilesRaw.map((prof) =>
+                isBuiltInProfileId(prof.id)
+                  ? prof
+                  : { ...prof, weights: remapLegacyWeightMap(prof.weights) },
+              )
+            : profilesRaw;
         const activeProfileId =
           typeof p.activeProfileId === "string" &&
           profiles.some((x) => x.id === p.activeProfileId)
@@ -638,6 +652,7 @@ export const useRandomizerStore = create<RandomizerState>()(
         showBanned: s.showBanned,
         history: s.history,
         stockGames: s.stockGames,
+        weightPresetScale: WEIGHT_PRESET_SCALE,
       }),
     },
   ),

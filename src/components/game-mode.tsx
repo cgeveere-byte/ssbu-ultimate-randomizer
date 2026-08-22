@@ -12,6 +12,7 @@ import {
   formatMultiplier,
   formatProbability,
   getWeightValue,
+  WEIGHT_MAP,
   initials,
 } from "@/lib/roster";
 import { isBuiltInProfileId } from "@/lib/profiles";
@@ -650,7 +651,7 @@ function FaceOffHalf({
     [liveProfile.weights],
   );
   const chance = pick ? (odds.byId[pick.fighter.id] ?? 0) : 0;
-  const isFav = weight >= 2;
+  const isFav = weight >= WEIGHT_MAP.favorite;
   const locked = isBuiltInProfileId(liveProfile.id);
   const canNudge = Boolean(pick) && !isSpinning;
   const atMin = weight <= 0;

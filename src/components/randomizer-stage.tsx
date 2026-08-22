@@ -8,6 +8,7 @@ import {
   type Fighter,
   ROSTER,
   WEIGHT_PRESETS,
+  WEIGHT_MAP,
   computeProbabilities,
   formatMultiplier,
   formatProbability,
@@ -308,7 +309,7 @@ export function RandomizerStage({
                 const profileOdds = computeProbabilities(profile.weights);
                 const p = profileOdds.byId[pick.fighter.id] ?? 0;
                 const pc = playerColor(i);
-                const isFav = w >= 2;
+                const isFav = w >= WEIGHT_MAP.favorite;
                 const isRare = w > 0 && w < 1;
                 const badgeVariant =
                   w <= 0

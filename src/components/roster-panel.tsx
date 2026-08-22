@@ -128,7 +128,7 @@ export function RosterPanel() {
             </>
           ) : (
             <>
-              Presets: Never ×0 · Rare ×0.5 · Normal ×1 · Often ×1.5 · Favorite ×2. Type any custom
+              Presets: Never ×0 · Rare ×0.25 · Normal ×1 · Often ×2 · Favorite ×5. Type any custom
               multiplier — % is the live chance on the next single roll.
             </>
           )}

@@ -2,6 +2,7 @@ import {
   ROSTER,
   getWeightValue,
   parseWeightRaw,
+  remapLegacyWeightMap,
   resolveWeightLevel,
 } from "./roster";
 
@@ -16,7 +17,7 @@ export interface WeightProfile {
 }
 
 export const EXPORT_FORMAT = "ssbu-randomizer-profiles" as const;
-export const EXPORT_VERSION = 2 as const;
+export const EXPORT_VERSION = 3 as const;
 
 /** Built-in equal-weight full roster — always present, never editable or deleted. */
 export const DEFAULT_PROFILE_ID = "default";
@@ -275,15 +276,31 @@ export function parseImportPayload(raw: unknown): WeightProfile[] {
     if (!Array.isArray(obj.profiles) || obj.profiles.length === 0) {
       throw new Error("No profiles found in this file.");
     }
-    return obj.profiles.map((p, i) => normalizeImportedProfile(p, i));
+    const ver = typeof obj.version === "number" ? obj.version : 2;
+    const profiles = obj.profiles.map((p, i) => normalizeImportedProfile(p, i));
+    if (ver < 3) {
+      return profiles.map((p) => ({
+        ...p,
+        weights: remapLegacyWeightMap(p.weights),
+      }));
+    }
+    return profiles;
   }
 
   if (obj.weights && typeof obj.weights === "object") {
-    return [normalizeImportedProfile(obj, 0)];
+    const profile = normalizeImportedProfile(obj, 0);
+    return [{ ...profile, weights: remapLegacyWeightMap(profile.weights) }];
   }
 
   if (looksLikeWeightMap(obj)) {
-    return [createProfile("Imported", normalizeWeights(obj as Record<string, number | string>))];
+    return [
+      createProfile(
+        "Imported",
+        remapLegacyWeightMap(
+          normalizeWeights(obj as Record<string, number | string>),
+        ),
+      ),
+    ];
   }
 
   throw new Error(

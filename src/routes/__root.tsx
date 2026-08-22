@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
+import { portraitUrls, preloadFighterPortraits } from "@/lib/roster";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,10 +17,50 @@ export const Route = createRootRoute({
           "Random Super Smash Bros. Ultimate character picker with per-fighter weights: never pick, rare, often, and favorites.",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      ...portraitUrls().map((href) => ({
+        rel: "preload" as const,
+        href,
+        as: "image" as const,
+        type: "image/webp",
+      })),
+    ],
   }),
   component: RootDocument,
 });
+
+function PortraitWarmup() {
+  useEffect(() => {
+    const kick = () => preloadFighterPortraits();
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(kick);
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = window.setTimeout(kick, 1);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed left-0 top-0 -z-10 h-px w-px overflow-hidden opacity-0"
+    >
+      {portraitUrls().map((src) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          width={1}
+          height={1}
+          decoding="async"
+          loading="eager"
+          fetchPriority="low"
+        />
+      ))}
+    </div>
+  );
+}
 
 function RootDocument() {
   return (
@@ -27,6 +69,7 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
+        <PortraitWarmup />
         <Outlet />
         <Scripts />
       </body>

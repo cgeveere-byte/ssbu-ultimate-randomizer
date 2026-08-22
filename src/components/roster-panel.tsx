@@ -57,8 +57,8 @@ export function RosterPanel() {
   const setSeriesFilter = useRandomizerStore((s) => s.setSeriesFilter);
   const showBanned = useRandomizerStore((s) => s.showBanned);
   const setShowBanned = useRandomizerStore((s) => s.setShowBanned);
-  const cycleWeight = useRandomizerStore((s) => s.cycleWeight);
   const setWeightValue = useRandomizerStore((s) => s.setWeightValue);
+
   const setAllWeightPresets = useRandomizerStore((s) => s.setAllWeightPresets);
   const resetWeights = useRandomizerStore((s) => s.resetWeights);
   const isSpinning = useRandomizerStore((s) => s.isSpinning);
@@ -317,7 +317,6 @@ export function RosterPanel() {
               fighter={fighter}
               weight={getWeightValue(weights, fighter.id)}
               weights={weights}
-              onCycle={() => cycleWeight(fighter.id)}
               onSetWeight={(v) => setWeightValue(fighter.id, v)}
               disabled={isSpinning}
               readOnly={readOnly}

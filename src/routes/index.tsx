@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Dices, Maximize2, SlidersHorizontal } from "lucide-react";
+import { Dices, Images, Maximize2, SlidersHorizontal } from "lucide-react";
 import { Toaster } from "sonner";
 import { ClientOnly } from "@/components/client-only";
 import { RandomizerStage } from "@/components/randomizer-stage";
@@ -8,6 +8,7 @@ import { RosterPanel } from "@/components/roster-panel";
 import { HistoryPanel } from "@/components/history-panel";
 import { ProfilesPanel } from "@/components/profiles-panel";
 import { GameMode } from "@/components/game-mode";
+import { GalleryPanel } from "@/components/gallery-panel";
 import { ROSTER } from "@/lib/roster";
 import { useRandomizerStore } from "@/lib/store";
 import { cn } from "@/lib/cn";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-type AppTab = "randomize" | "profiles";
+type AppTab = "randomize" | "profiles" | "gallery";
 
 function AppShell() {
   const [tab, setTab] = useState<AppTab>("randomize");
@@ -64,6 +65,13 @@ function AppShell() {
               icon={<SlidersHorizontal className="h-4 w-4" strokeWidth={1.75} />}
               label="Profiles"
             />
+            <TabButton
+              id="tab-gallery"
+              active={tab === "gallery"}
+              onClick={() => setTab("gallery")}
+              icon={<Images className="h-4 w-4" strokeWidth={1.75} />}
+              label="Gallery"
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -103,7 +111,7 @@ function AppShell() {
               <HistoryPanel />
             </aside>
           </div>
-        ) : (
+        ) : tab === "profiles" ? (
           <div
             role="tabpanel"
             id="panel-profiles"
@@ -130,6 +138,14 @@ function AppShell() {
             </div>
             <ProfilesPanel />
             <RosterPanel />
+          </div>
+        ) : (
+          <div
+            role="tabpanel"
+            id="panel-gallery"
+            aria-labelledby="tab-gallery"
+          >
+            <GalleryPanel />
           </div>
         )}
       </div>
@@ -166,7 +182,7 @@ function TabButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "relative flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] px-4 text-sm font-medium transition-[color,background-color] duration-150 sm:flex-none sm:min-w-[9.5rem]",
+        "relative flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-md)] px-2.5 text-sm font-medium transition-[color,background-color] duration-150 sm:flex-none sm:min-w-[7.5rem] sm:gap-2 sm:px-4",
         active
           ? "bg-bg-subtle text-fg shadow-[inset_0_0_0_1px_var(--color-border-strong)]"
           : "text-fg-muted hover:text-fg",

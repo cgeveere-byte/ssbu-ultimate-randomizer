@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, Lock, Star } from "lucide-react";
+import { ArrowDown, ArrowUp, Ban, Equal, Lock, Star } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   type Fighter,
   type WeightLevel,
+  type WeightPreset,
   WEIGHT_PRESETS,
   clampWeight,
   fighterTileStyle,
   formatMultiplier,
   formatProbability,
+  fighterPortraitUrl,
   initials,
   probabilityWithOverride,
   resolveWeightLevel,
@@ -28,6 +30,27 @@ const weightVariant: Record<
   custom: "default",
 };
 
+function WeightPresetIcon({
+  id,
+  selected,
+}: {
+  id: WeightPreset;
+  selected: boolean;
+}) {
+  const cls = "h-3.5 w-3.5";
+  if (id === "never") return <Ban className={cls} strokeWidth={2.25} aria-hidden />;
+  if (id === "rare") return <ArrowDown className={cls} strokeWidth={2.4} aria-hidden />;
+  if (id === "normal") return <Equal className={cls} strokeWidth={2.4} aria-hidden />;
+  if (id === "often") return <ArrowUp className={cls} strokeWidth={2.4} aria-hidden />;
+  return (
+    <Star
+      className={cn(cls, selected && "fill-amber-400 text-amber-400")}
+      strokeWidth={selected ? 0 : 2}
+      aria-hidden
+    />
+  );
+}
+
 export function FighterMonogram({
   fighter,
   size = "md",
@@ -40,6 +63,7 @@ export function FighterMonogram({
   className?: string;
 }) {
   const tile = fighterTileStyle(fighter.id);
+  const portrait = fighterPortraitUrl(fighter.id);
   const sizes = {
     sm: "h-10 w-10 text-xs rounded-[var(--radius-sm)]",
     md: "h-11 w-11 text-sm rounded-[var(--radius-md)] sm:h-12 sm:w-12 sm:rounded-[var(--radius-md)]",
@@ -62,16 +86,28 @@ export function FighterMonogram({
         : "-right-1 -bottom-1";
   return (
     <div className={cn("relative shrink-0", sizes[size], className)}>
-      <div
-        className={cn(
-          "flex h-full w-full items-center justify-center rounded-[inherit] font-semibold tracking-tight text-fg",
-          dimmed && "opacity-40 grayscale",
-        )}
-        style={tile}
-        aria-hidden
-      >
-        {initials(fighter.name)}
-      </div>
+      {portrait ? (
+        <img
+          src={portrait}
+          alt=""
+          draggable={false}
+          className={cn(
+            "h-full w-full rounded-[inherit] object-cover object-center",
+            dimmed && "opacity-40 grayscale",
+          )}
+        />
+      ) : (
+        <div
+          className={cn(
+            "flex h-full w-full items-center justify-center rounded-[inherit] font-semibold tracking-tight text-fg",
+            dimmed && "opacity-40 grayscale",
+          )}
+          style={tile}
+          aria-hidden
+        >
+          {initials(fighter.name)}
+        </div>
+      )}
       {fighter.dlc && (
         <span
           className={cn(
@@ -106,7 +142,6 @@ export function FighterCard({
   fighter,
   weight,
   weights,
-  onCycle,
   onSetWeight,
   disabled,
   readOnly,
@@ -116,7 +151,6 @@ export function FighterCard({
   weight: number;
   /** Full profile weight map — used so live draft odds stay accurate for custom values. */
   weights: WeightMap;
-  onCycle: () => void;
   onSetWeight: (value: number) => void;
   disabled?: boolean;
   /** Built-in profile — show lock UI even when not spinning. */
@@ -136,7 +170,6 @@ export function FighterCard({
     return Number.isFinite(n) ? clampWeight(n) : null;
   }, [draft]);
 
-  // Prefer live draft while typing so custom values update % immediately
   const effectiveWeight = !readOnly && draftNumber !== null ? draftNumber : weight;
   const probability = useMemo(
     () => probabilityWithOverride(weights, fighter.id, effectiveWeight),
@@ -153,9 +186,7 @@ export function FighterCard({
     : level === "custom"
       ? "Custom"
       : (presetMeta?.short ?? "Norm");
-  const badgeVariant = isFav
-    ? "favorite"
-    : weightVariant[level];
+  const badgeVariant = isFav ? "favorite" : weightVariant[level];
 
   const commitDraft = (raw: string) => {
     if (locked) return;
@@ -193,22 +224,7 @@ export function FighterCard({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onCycle}
-        disabled={locked}
-        title={
-          readOnly
-            ? `${fighter.name} — locked on built-in profile`
-            : `${fighter.name} — ${formatMultiplier(effectiveWeight)} · ${formatProbability(probability)}. Click to cycle preset.`
-        }
-        className={cn(
-          "flex items-start gap-2 text-left sm:gap-3",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 rounded-[var(--radius-sm)]",
-          !locked && "active:scale-[0.99] transition-transform duration-150",
-          locked && "cursor-not-allowed",
-        )}
-      >
+      <div className="flex items-start gap-2 sm:gap-3">
         <FighterMonogram fighter={fighter} dimmed={banned} />
         <div className="min-w-0 flex-1">
           <div
@@ -274,46 +290,54 @@ export function FighterCard({
             </span>
           </div>
         </div>
-      </button>
+      </div>
 
       <div
         className={cn(
-          "mt-auto flex items-center gap-2",
+          "mt-auto flex items-center gap-1.5",
           readOnly && "pointer-events-none opacity-45",
         )}
       >
-        <div className="flex flex-1 gap-1" aria-hidden>
-          {WEIGHT_PRESETS.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              disabled={locked}
-              title={
-                readOnly
-                  ? "Locked — switch to a custom profile to edit"
-                  : `${preset.label} (×${preset.multiplier})`
-              }
-              onClick={() => onSetWeight(preset.multiplier)}
-              className={cn(
-                "h-1.5 flex-1 rounded-full transition-colors duration-150",
-                level === preset.id
-                  ? preset.id === "never"
-                    ? "bg-danger"
-                    : preset.id === "favorite"
-                      ? "bg-amber-400"
-                      : preset.id === "often"
-                        ? "bg-often"
-                        : preset.id === "rare"
-                          ? "bg-rare"
-                          : "bg-fg-muted"
-                  : readOnly
-                    ? "bg-bg-hover"
-                    : "bg-bg-hover hover:bg-fg-subtle/40",
-              )}
-            />
-          ))}
+        <div
+          className="grid flex-1 grid-cols-5 overflow-hidden rounded-[var(--radius-sm)] border border-border bg-bg"
+          role="radiogroup"
+          aria-label={`Weight for ${fighter.name}`}
+        >
+          {WEIGHT_PRESETS.map((preset) => {
+            const selected = level === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={`${preset.label} (×${preset.multiplier})`}
+                disabled={locked}
+                title={`${preset.label} (×${preset.multiplier})`}
+                onClick={() => onSetWeight(preset.multiplier)}
+                className={cn(
+                  "flex h-9 min-w-0 items-center justify-center px-0.5 transition-colors duration-150 sm:h-8",
+                  "focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35",
+                  selected
+                    ? preset.id === "never"
+                      ? "bg-danger-bg text-danger"
+                      : preset.id === "favorite"
+                        ? "bg-amber-400/15 text-amber-300"
+                        : preset.id === "often"
+                          ? "bg-often-bg text-often"
+                          : preset.id === "rare"
+                            ? "bg-rare-bg text-rare"
+                            : "bg-bg-subtle text-fg"
+                    : "text-fg-subtle hover:bg-bg-subtle hover:text-fg",
+                  locked && "cursor-not-allowed",
+                )}
+              >
+                <WeightPresetIcon id={preset.id} selected={selected} />
+              </button>
+            );
+          })}
         </div>
-        <label className="flex shrink-0 items-center gap-1">
+        <label className="flex shrink-0 items-center">
           <span className="sr-only">
             {readOnly
               ? `Weight for ${fighter.name} (locked)`
@@ -342,7 +366,7 @@ export function FighterCard({
             }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "tabular h-7 w-14 rounded-[var(--radius-sm)] border border-border bg-bg px-1.5 text-center text-xs text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+              "tabular h-9 w-12 rounded-[var(--radius-sm)] border border-border bg-bg px-1 text-center text-xs text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 sm:h-8 sm:w-14 sm:px-1.5",
               locked && "cursor-not-allowed text-fg-muted",
             )}
           />

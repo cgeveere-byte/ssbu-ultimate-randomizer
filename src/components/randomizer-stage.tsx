@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dices, Users, Shuffle, Ban, Minus, Plus, Star, ArrowDown } from "lucide-react";
+import { Dices, Users, Ban, Minus, Plus, Star, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FighterMonogram } from "@/components/fighter-tile";
+import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import {
   type Fighter,
   ROSTER,
@@ -13,7 +14,6 @@ import {
   getWeightValue,
   resolveWeightLevel,
 } from "@/lib/roster";
-import { profileEligibleCount } from "@/lib/profiles";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
 import { type PlayerPick, useRandomizerStore } from "@/lib/store";
 import { cn } from "@/lib/cn";
@@ -27,6 +27,8 @@ export function RandomizerStage({
   const setPlayerCount = useRandomizerStore((s) => s.setPlayerCount);
   const uniqueOnly = useRandomizerStore((s) => s.uniqueOnly);
   const setUniqueOnly = useRandomizerStore((s) => s.setUniqueOnly);
+  const usedFighterIds = useRandomizerStore((s) => s.usedFighterIds);
+  const resetUsedFighters = useRandomizerStore((s) => s.resetUsedFighters);
   const isSpinning = useRandomizerStore((s) => s.isSpinning);
   const setSpinning = useRandomizerStore((s) => s.setSpinning);
   const lastPicks = useRandomizerStore((s) => s.lastPicks);
@@ -66,14 +68,11 @@ export function RandomizerStage({
     [perPlayerProfiles, playerProfileIds, activeProfileId],
   );
 
-  const canRoll = useMemo(() => {
-    for (let i = 0; i < playerCount; i++) {
-      const pid = getPlayerProfileId(i);
-      const profile = getProfile(pid);
-      if (profileEligibleCount(profile.weights) === 0) return false;
-    }
-    return playerCount > 0;
-  }, [playerCount, getPlayerProfileId, getProfile]);
+  const canRoll = useRandomizerStore((s) => s.canRoll());
+  const uniqueExhausted =
+    uniqueOnly &&
+    !canRoll &&
+    usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0);
 
   const maxPlayers = 8;
 
@@ -216,6 +215,11 @@ export function RandomizerStage({
           >
             {isSpinning ? (
               "Spinning…"
+            ) : uniqueExhausted ? (
+              <>
+                <Ban className="h-5 w-5" />
+                Reset unique
+              </>
             ) : !canRoll ? (
               <>
                 <Ban className="h-5 w-5" />
@@ -466,20 +470,23 @@ export function RandomizerStage({
               </div>
             </div>
 
-            <button
-              type="button"
+            <UniqueDupesToggle
+              uniqueOnly={uniqueOnly}
+              onChange={setUniqueOnly}
               disabled={isSpinning}
-              onClick={() => setUniqueOnly(!uniqueOnly)}
-              className={cn(
-                "flex h-11 items-center gap-2 rounded-[var(--radius-md)] border px-3 text-xs font-medium transition-colors duration-150",
-                uniqueOnly
-                  ? "border-border-strong bg-bg-subtle text-fg"
-                  : "border-border bg-bg text-fg-muted hover:text-fg",
+            />
+            {uniqueOnly &&
+              usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0) && (
+                <button
+                  type="button"
+                  disabled={isSpinning}
+                  onClick={resetUsedFighters}
+                  className="flex h-11 items-center rounded-[var(--radius-md)] border border-border bg-bg px-3 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
+                  title="Allow previously rolled fighters again"
+                >
+                  Reset unique
+                </button>
               )}
-            >
-              <Shuffle className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {uniqueOnly ? "Unique only" : "Allow duplicates"}
-            </button>
 
             <button
               type="button"

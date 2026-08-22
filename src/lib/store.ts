@@ -29,6 +29,10 @@ import {
   smash64Weights,
   uniqueProfileName,
 } from "./profiles";
+import {
+  type StockGame,
+  clampStocks,
+} from "./stock-session";
 
 export interface PickRecord {
   id: string;
@@ -43,10 +47,32 @@ export interface PlayerPick {
   profileName: string;
 }
 
+export type { StockGame };
+
 export { DEFAULT_PROFILE_ID, isBuiltInProfileId, isDefaultProfileId, makeDefaultProfile, makeSmash64Profile };
 
 function emptyPlayerProfiles(): (string | null)[] {
   return Array.from({ length: 8 }, () => null);
+}
+
+function emptyUsedFighters(): string[][] {
+  return Array.from({ length: 8 }, () => []);
+}
+
+function zeroOut(
+  pool: { fighter: Fighter; weight: number }[],
+  blocked: Set<string>,
+): { fighter: Fighter; weight: number }[] {
+  if (blocked.size === 0) return pool;
+  return pool.map((p) =>
+    blocked.has(p.fighter.id) ? { ...p, weight: 0 } : p,
+  );
+}
+
+function poolHasEligible(
+  pool: { fighter: Fighter; weight: number }[],
+): boolean {
+  return pool.some((p) => p.weight > 0);
 }
 
 function poolFromWeights(weights: WeightMap): { fighter: Fighter; weight: number }[] {
@@ -67,12 +93,15 @@ interface RandomizerState {
   playerProfileIds: (string | null)[];
   playerCount: number;
   uniqueOnly: boolean;
+  /** Per-player fighter ids already rolled while Unique is on. */
+  usedFighterIds: string[][];
   search: string;
   seriesFilter: string | "all";
   showBanned: boolean;
   lastPicks: PlayerPick[];
   history: PickRecord[];
   isSpinning: boolean;
+  stockGames: StockGame[];
 
   getActiveProfile: () => WeightProfile;
   getProfile: (id: string | null | undefined) => WeightProfile;
@@ -101,6 +130,7 @@ interface RandomizerState {
 
   setPlayerCount: (n: number) => void;
   setUniqueOnly: (v: boolean) => void;
+  resetUsedFighters: () => void;
   setSearch: (q: string) => void;
   setSeriesFilter: (s: string | "all") => void;
   setShowBanned: (v: boolean) => void;
@@ -108,6 +138,16 @@ interface RandomizerState {
   setLastPicks: (picks: PlayerPick[]) => void;
   pushHistory: (picks: PlayerPick[]) => void;
   clearHistory: () => void;
+
+  /** Face-off: bump this player's fighter weight by ±step, duplicating built-ins / shared profiles. */
+  nudgePlayerFighterWeight: (
+    playerIndex: number,
+    fighterId: string,
+    delta: number,
+  ) => void;
+
+  recordStockGame: (game: Omit<StockGame, "id" | "at">) => void;
+  clearStockSession: () => void;
 
   roll: () => PlayerPick[];
   importProfiles: (incoming: WeightProfile[], mode: "merge" | "replace") => number;
@@ -144,12 +184,14 @@ export const useRandomizerStore = create<RandomizerState>()(
       playerProfileIds: emptyPlayerProfiles(),
       playerCount: 2,
       uniqueOnly: true,
+      usedFighterIds: emptyUsedFighters(),
       search: "",
       seriesFilter: "all",
       showBanned: true,
       lastPicks: [],
       history: [],
       isSpinning: false,
+      stockGames: [],
 
       getActiveProfile: () => {
         const s = get();
@@ -189,11 +231,16 @@ export const useRandomizerStore = create<RandomizerState>()(
 
       canRoll: () => {
         const s = get();
+        if (s.playerCount <= 0) return false;
         for (let i = 0; i < s.playerCount; i++) {
           const pid = s.getPlayerProfileId(i);
-          if (s.getEligibleCount(pid) === 0) return false;
+          let pool = poolFromWeights(s.getProfile(pid).weights);
+          if (s.uniqueOnly) {
+            pool = zeroOut(pool, new Set(s.usedFighterIds[i] ?? []));
+          }
+          if (!poolHasEligible(pool)) return false;
         }
-        return s.playerCount > 0;
+        return true;
       },
 
       isActiveReadOnly: () => isBuiltInProfileId(get().activeProfileId),
@@ -320,8 +367,89 @@ export const useRandomizerStore = create<RandomizerState>()(
         set((s) => updateActiveProfile(s, () => defaultWeights()));
       },
 
+      nudgePlayerFighterWeight: (playerIndex, fighterId, delta) => {
+        if (playerIndex < 0 || playerIndex > 7) return;
+        if (!Number.isFinite(delta) || delta === 0) return;
+
+        set((s) => {
+          const currentId = s.getPlayerProfileId(playerIndex);
+          const usedByOther = Array.from({ length: s.playerCount }, (_, i) => i)
+            .filter((i) => i !== playerIndex)
+            .some((i) => s.getPlayerProfileId(i) === currentId);
+          const needsCopy = isBuiltInProfileId(currentId) || usedByOther;
+
+          let profiles = s.profiles;
+          let targetId = currentId;
+          const playerProfileIds = [...s.playerProfileIds];
+
+          if (needsCopy) {
+            const builtin = makeBuiltInProfile(currentId);
+            const source = builtin ?? profiles.find((p) => p.id === currentId);
+            if (!source) return s;
+            const name = uniqueProfileName(
+              builtin ? `${source.name} custom` : `${source.name} P${playerIndex + 1}`,
+              profiles.map((p) => p.name),
+            );
+            const copy = cloneProfile(source, name);
+            profiles = ensureBuiltInProfiles([...profiles, copy]);
+            targetId = copy.id;
+          }
+
+          if (isBuiltInProfileId(targetId)) return s;
+
+          playerProfileIds[playerIndex] = targetId;
+
+          const target = profiles.find((p) => p.id === targetId);
+          if (!target) return s;
+          const cur = getWeightValue(target.weights, fighterId);
+          const next = clampWeight(Math.min(10, Math.max(0, cur + delta)));
+          if (next === cur) return s;
+
+          profiles = ensureBuiltInProfiles(
+            profiles.map((p) =>
+              p.id === targetId
+                ? {
+                    ...p,
+                    weights: { ...p.weights, [fighterId]: next },
+                    updatedAt: Date.now(),
+                  }
+                : p,
+            ),
+          );
+
+          return {
+            profiles,
+            playerProfileIds,
+            perPlayerProfiles: true,
+          };
+        });
+      },
+
+      recordStockGame: (game) => {
+        const p1 = clampStocks(game.p1Stocks);
+        const p2 = clampStocks(game.p2Stocks);
+        if (!game.p1FighterId || !game.p2FighterId) return;
+        set((s) => ({
+          stockGames: [
+            {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              at: Date.now(),
+              p1FighterId: game.p1FighterId,
+              p2FighterId: game.p2FighterId,
+              p1Stocks: p1,
+              p2Stocks: p2,
+              timedOut: Boolean(game.timedOut),
+            },
+            ...s.stockGames,
+          ].slice(0, 80),
+        }));
+      },
+
+      clearStockSession: () => set({ stockGames: [], usedFighterIds: emptyUsedFighters() }),
+
       setPlayerCount: (n) => set({ playerCount: Math.min(8, Math.max(1, n)) }),
       setUniqueOnly: (v) => set({ uniqueOnly: v }),
+      resetUsedFighters: () => set({ usedFighterIds: emptyUsedFighters() }),
       setSearch: (q) => set({ search: q }),
       setSeriesFilter: (series) => set({ seriesFilter: series }),
       setShowBanned: (v) => set({ showBanned: v }),
@@ -346,26 +474,30 @@ export const useRandomizerStore = create<RandomizerState>()(
       roll: () => {
         const s = get();
         const results: PlayerPick[] = [];
-        const used = new Set<string>();
+        const nextUsed = emptyUsedFighters();
+        for (let i = 0; i < 8; i++) {
+          nextUsed[i] = (s.usedFighterIds[i] ?? []).slice();
+        }
 
         for (let i = 0; i < s.playerCount; i++) {
           const profileId = s.getPlayerProfileId(i);
           const profile = s.getProfile(profileId);
           let pool = poolFromWeights(profile.weights);
-          if (s.uniqueOnly && used.size > 0) {
-            pool = pool.map((p) =>
-              used.has(p.fighter.id) ? { ...p, weight: 0 } : p,
-            );
+          if (s.uniqueOnly) {
+            pool = zeroOut(pool, new Set(nextUsed[i]));
           }
           const fighter = pickWeighted(pool);
           if (!fighter) continue;
-          if (s.uniqueOnly) used.add(fighter.id);
+          if (s.uniqueOnly) {
+            nextUsed[i] = [...nextUsed[i], fighter.id];
+          }
           results.push({
             fighter,
             profileId: profile.id,
             profileName: profile.name,
           });
         }
+        if (s.uniqueOnly) set({ usedFighterIds: nextUsed });
         return results;
       },
 
@@ -485,6 +617,14 @@ export const useRandomizerStore = create<RandomizerState>()(
           ...p,
           profiles,
           activeProfileId,
+          stockGames: Array.isArray(p.stockGames) ? p.stockGames : current.stockGames,
+          usedFighterIds: Array.isArray(p.usedFighterIds)
+            ? Array.from({ length: 8 }, (_, i) =>
+                Array.isArray(p.usedFighterIds?.[i])
+                  ? p.usedFighterIds[i].filter((id): id is string => typeof id === "string")
+                  : [],
+              )
+            : current.usedFighterIds,
         };
       },
       partialize: (s) => ({
@@ -494,8 +634,10 @@ export const useRandomizerStore = create<RandomizerState>()(
         playerProfileIds: s.playerProfileIds,
         playerCount: s.playerCount,
         uniqueOnly: s.uniqueOnly,
+        usedFighterIds: s.usedFighterIds,
         showBanned: s.showBanned,
         history: s.history,
+        stockGames: s.stockGames,
       }),
     },
   ),

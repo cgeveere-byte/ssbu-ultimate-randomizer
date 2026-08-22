@@ -302,6 +302,118 @@ export function initials(name: string): string {
   return cleaned.slice(0, 2).toUpperCase();
 }
 
+/** Fighters with a custom portrait in /public/portraits. Others keep the monogram. */
+const PORTRAIT_IDS = new Set([
+  "mario",
+  "donkey-kong",
+  "link",
+  "samus",
+  "dark-samus",
+  "yoshi",
+  "kirby",
+  "fox",
+  "pikachu",
+  "luigi",
+  "ness",
+  "captain-falcon",
+  "jigglypuff",
+  "peach",
+  "daisy",
+  "bowser",
+  "ice-climbers",
+  "sheik",
+  "zelda",
+  "dr-mario",
+  "pichu",
+  "falco",
+  "marth",
+  "lucina",
+  "young-link",
+  "ganondorf",
+  "mewtwo",
+  "roy",
+  "chrom",
+  "mr-game-watch",
+  "meta-knight",
+  "pit",
+  "dark-pit",
+  "zero-suit-samus",
+  "wario",
+  "snake",
+  "ike",
+  "pokemon-trainer",
+  "diddy-kong",
+  "lucas",
+  "sonic",
+  "king-dedede",
+  "olimar",
+  "lucario",
+  "rob",
+  "toon-link",
+  "wolf",
+  "villager",
+  "mega-man",
+  "wii-fit-trainer",
+  "mii-brawler",
+  "mii-swordfighter",
+  "mii-gunner",
+  "rosalina",
+  "little-mac",
+  "greninja",
+  "palutena",
+  "pac-man",
+  "robin",
+  "shulk",
+  "bowser-jr",
+  "duck-hunt",
+  "ryu",
+  "ken",
+  "cloud",
+  "corrin",
+  "bayonetta",
+  "inkling",
+  "ridley",
+  "simon",
+  "richter",
+  "king-k-rool",
+  "isabelle",
+  "incineroar",
+  "piranha-plant",
+  "joker",
+  "hero",
+  "banjo-kazooie",
+  "terry",
+  "byleth",
+  "min-min",
+  "steve",
+  "sephiroth",
+  "pyra-mythra",
+  "kazuya",
+  "sora",
+]);
+
+export function fighterPortraitUrl(id: string): string | null {
+  return PORTRAIT_IDS.has(id) ? `/portraits/${id}.webp` : null;
+}
+
+export function portraitUrls(): string[] {
+  return Array.from(PORTRAIT_IDS, (id) => `/portraits/${id}.webp`);
+}
+
+const warmImages: HTMLImageElement[] = [];
+
+/** Download + decode every portrait so the randomizer reel never flashes empty. */
+export function preloadFighterPortraits(): void {
+  if (typeof window === "undefined" || warmImages.length > 0) return;
+  for (const src of portraitUrls()) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+    void img.decode().catch(() => {});
+    warmImages.push(img);
+  }
+}
+
 export interface FighterPalette {
   h: number;
   s: number;

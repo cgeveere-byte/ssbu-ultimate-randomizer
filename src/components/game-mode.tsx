@@ -112,11 +112,11 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     timers.current = [];
   };
 
-  const saveStockResult = () => {
+  const saveStockResult = useCallback(() => {
     const a = displayPicks.length > 0 ? displayPicks : lastPicks;
     const p1 = a[0];
     const p2 = a[1];
-    if (!p1 || !p2 || p1Stocks == null || p2Stocks == null) return;
+    if (!p1 || !p2 || p1Stocks == null || p2Stocks == null) return false;
     recordStockGame({
       p1FighterId: p1.fighter.id,
       p2FighterId: p2.fighter.id,
@@ -126,7 +126,8 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     });
     setP1Stocks(null);
     setP2Stocks(null);
-  };
+    return true;
+  }, [displayPicks, lastPicks, p1Stocks, p2Stocks, recordStockGame]);
 
   const selectP1Stocks = (n: number) => {
     setP1Stocks(n);
@@ -158,6 +159,8 @@ export function GameMode({ onExit }: { onExit: () => void }) {
   const spin = useCallback(() => {
     if (isSpinning) return;
     if (!canRoll) return;
+
+    saveStockResult();
 
     clearTimers();
     unlockRollSound();
@@ -227,6 +230,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     pushHistory,
     quickRolls,
     roll,
+    saveStockResult,
     setLastPicks,
     setSpinning,
   ]);
@@ -396,7 +400,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
                     ) : (
                       <>
                         <Dices className="h-5 w-5" strokeWidth={2} />
-                        Randomize
+                        {canSave ? `Save ${p1Stocks}–${p2Stocks} · Roll` : "Randomize"}
                       </>
                     )}
                   </button>

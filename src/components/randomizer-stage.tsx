@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dices, Users, Ban, Minus, Plus, Star, ArrowDown } from "lucide-react";
+import { Dices, Users, Ban, Minus, Plus, Star, ArrowDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
+import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import {
   type Fighter,
   ROSTER,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/roster";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
 import { type PlayerPick, useRandomizerStore } from "@/lib/store";
+import { playRollLock, playRollTick, unlockRollSound } from "@/lib/roll-sound";
 import { cn } from "@/lib/cn";
 
 export function RandomizerStage({
@@ -121,6 +123,7 @@ export function RandomizerStage({
     if (!canRoll) return;
 
     clearTimers();
+    unlockRollSound();
     setSpinning(true);
     setRevealed(false);
 
@@ -153,6 +156,7 @@ export function RandomizerStage({
         }
         setDisplayPicks(flash);
         setReelKey((k) => k + 1);
+        playRollTick(progress);
       }
       if (progress < 1) {
         const id = window.setTimeout(() => {
@@ -165,6 +169,7 @@ export function RandomizerStage({
         pushHistory(final);
         setRevealed(true);
         setSpinning(false);
+        playRollLock();
       }
     };
 
@@ -215,7 +220,10 @@ export function RandomizerStage({
             className="w-full shrink-0 sm:w-auto sm:min-w-[11rem]"
           >
             {isSpinning ? (
-              "Spinning…"
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Spinning…
+              </>
             ) : uniqueExhausted ? (
               <>
                 <Ban className="h-5 w-5" />
@@ -341,7 +349,12 @@ export function RandomizerStage({
                     >
                       P{i + 1}
                     </span>
-                    <FighterMonogram fighter={pick.fighter} size="lg" className="!h-14 !w-14 !text-base" />
+                    <div className="relative">
+                      <FighterMonogram fighter={pick.fighter} size="lg" className="!h-14 !w-14 !text-base" />
+                      {isSpinning && (
+                        <div className="pointer-events-none absolute -inset-1 rounded-full border-2 border-fg-subtle/25 border-t-fg animate-spin" />
+                      )}
+                    </div>
                     <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-start text-center">
                       <p className="line-clamp-2 w-full text-xs font-semibold leading-tight tracking-tight text-fg sm:text-[13px]">
                         {pick.fighter.name}
@@ -476,6 +489,7 @@ export function RandomizerStage({
               onChange={setUniqueOnly}
               disabled={isSpinning}
             />
+            <RollSfxToggle />
             {uniqueOnly &&
               usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0) && (
                 <button

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Dices, Lock, Minus, Plus, RotateCcw, Star, Users, X } from "lucide-react";
+import { Ban, Dices, Loader2, Lock, Minus, Plus, RotateCcw, Star, Users, X } from "lucide-react";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
+import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { MatchupSheet, SetScoreButton } from "@/components/stock-session-panel";
 import {
   type Fighter,
@@ -18,6 +19,7 @@ import {
 import { isBuiltInProfileId } from "@/lib/profiles";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
 import { type PlayerPick, useRandomizerStore } from "@/lib/store";
+import { playRollLock, playRollTick, unlockRollSound } from "@/lib/roll-sound";
 import { STOCKS_PER_GAME } from "@/lib/stock-session";
 import { cn } from "@/lib/cn";
 
@@ -145,6 +147,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     if (!canRoll) return;
 
     clearTimers();
+    unlockRollSound();
     setSpinning(true);
     setRevealed(false);
     setP1Stocks(null);
@@ -179,6 +182,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
         }
         setDisplayPicks(flash);
         setReelKey((k) => k + 1);
+        playRollTick(progress);
       }
       if (progress < 1) {
         const id = window.setTimeout(() => {
@@ -191,6 +195,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
         pushHistory(final);
         setRevealed(true);
         setSpinning(false);
+        playRollLock();
       }
     };
 
@@ -314,6 +319,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
                     onChange={setUniqueOnly}
                     disabled={isSpinning}
                   />
+                  <RollSfxToggle />
                   {uniqueOnly &&
                     usedFighterIds.slice(0, 2).some((ids) => ids.length > 0) && (
                       <button
@@ -354,7 +360,10 @@ export function GameMode({ onExit }: { onExit: () => void }) {
                     )}
                   >
                     {isSpinning ? (
-                      "Spinning…"
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Spinning…
+                      </>
                     ) : uniqueExhausted ? (
                       <>
                         <Ban className="h-5 w-5" />
@@ -541,6 +550,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
               disabled={isSpinning}
               size="lg"
             />
+            <RollSfxToggle size="lg" />
             {uniqueOnly &&
               usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0) && (
                 <button
@@ -580,7 +590,10 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             )}
           >
             {isSpinning ? (
-              "Spinning…"
+              <>
+                <Loader2 className="h-7 w-7 animate-spin" />
+                Spinning…
+              </>
             ) : uniqueExhausted ? (
               <>
                 <Ban className="h-7 w-7" />
@@ -708,6 +721,12 @@ function FaceOffHalf({
             <Dices className="h-8 w-8" strokeWidth={1.4} />
           </div>
           <p className="text-sm text-fg-muted">{emptyHint}</p>
+        </div>
+      )}
+
+      {isSpinning && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+          <div className="h-16 w-16 rounded-full border-[3px] border-white/20 border-t-white animate-spin" />
         </div>
       )}
 

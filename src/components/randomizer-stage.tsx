@@ -134,7 +134,7 @@ export function RandomizerStage({
     }
 
     const pool = flashPool();
-    const duration = 3200;
+    const duration = 3200 + Math.random() * 1800;
     const start = performance.now();
     let lastTick = 0;
 

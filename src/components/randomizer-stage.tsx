@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
+import { QuickRollsToggle, rollDurationMs } from "@/components/quick-rolls-toggle";
 import {
   type Fighter,
   ROSTER,
@@ -30,6 +31,8 @@ export function RandomizerStage({
   const setPlayerCount = useRandomizerStore((s) => s.setPlayerCount);
   const uniqueOnly = useRandomizerStore((s) => s.uniqueOnly);
   const setUniqueOnly = useRandomizerStore((s) => s.setUniqueOnly);
+  const quickRolls = useRandomizerStore((s) => s.quickRolls);
+  const setQuickRolls = useRandomizerStore((s) => s.setQuickRolls);
   const usedFighterIds = useRandomizerStore((s) => s.usedFighterIds);
   const resetUsedFighters = useRandomizerStore((s) => s.resetUsedFighters);
   const isSpinning = useRandomizerStore((s) => s.isSpinning);
@@ -134,7 +137,7 @@ export function RandomizerStage({
     }
 
     const pool = flashPool();
-    const duration = 3200 + Math.random() * 1800;
+    const duration = rollDurationMs(quickRolls);
     const start = performance.now();
     let lastTick = 0;
 
@@ -186,6 +189,7 @@ export function RandomizerStage({
     flashPool,
     isSpinning,
     pushHistory,
+    quickRolls,
     roll,
     setLastPicks,
     setSpinning,
@@ -487,6 +491,11 @@ export function RandomizerStage({
             <UniqueDupesToggle
               uniqueOnly={uniqueOnly}
               onChange={setUniqueOnly}
+              disabled={isSpinning}
+            />
+            <QuickRollsToggle
+              quick={quickRolls}
+              onChange={setQuickRolls}
               disabled={isSpinning}
             />
             <RollSfxToggle />

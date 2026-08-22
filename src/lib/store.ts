@@ -95,6 +95,7 @@ interface RandomizerState {
   playerProfileIds: (string | null)[];
   playerCount: number;
   uniqueOnly: boolean;
+  quickRolls: boolean;
   /** Per-player fighter ids already rolled while Unique is on. */
   usedFighterIds: string[][];
   search: string;
@@ -132,6 +133,7 @@ interface RandomizerState {
 
   setPlayerCount: (n: number) => void;
   setUniqueOnly: (v: boolean) => void;
+  setQuickRolls: (v: boolean) => void;
   resetUsedFighters: () => void;
   setSearch: (q: string) => void;
   setSeriesFilter: (s: string | "all") => void;
@@ -186,6 +188,7 @@ export const useRandomizerStore = create<RandomizerState>()(
       playerProfileIds: emptyPlayerProfiles(),
       playerCount: 2,
       uniqueOnly: true,
+      quickRolls: false,
       usedFighterIds: emptyUsedFighters(),
       search: "",
       seriesFilter: "all",
@@ -451,6 +454,7 @@ export const useRandomizerStore = create<RandomizerState>()(
 
       setPlayerCount: (n) => set({ playerCount: Math.min(8, Math.max(1, n)) }),
       setUniqueOnly: (v) => set({ uniqueOnly: v }),
+      setQuickRolls: (v) => set({ quickRolls: v }),
       resetUsedFighters: () => set({ usedFighterIds: emptyUsedFighters() }),
       setSearch: (q) => set({ search: q }),
       setSeriesFilter: (series) => set({ seriesFilter: series }),
@@ -632,6 +636,7 @@ export const useRandomizerStore = create<RandomizerState>()(
           profiles,
           activeProfileId,
           stockGames: Array.isArray(p.stockGames) ? p.stockGames : current.stockGames,
+          quickRolls: typeof p.quickRolls === "boolean" ? p.quickRolls : current.quickRolls,
           usedFighterIds: Array.isArray(p.usedFighterIds)
             ? Array.from({ length: 8 }, (_, i) =>
                 Array.isArray(p.usedFighterIds?.[i])
@@ -648,6 +653,7 @@ export const useRandomizerStore = create<RandomizerState>()(
         playerProfileIds: s.playerProfileIds,
         playerCount: s.playerCount,
         uniqueOnly: s.uniqueOnly,
+        quickRolls: s.quickRolls,
         usedFighterIds: s.usedFighterIds,
         showBanned: s.showBanned,
         history: s.history,

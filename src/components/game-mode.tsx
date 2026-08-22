@@ -160,7 +160,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     }
 
     const pool = flashPool();
-    const duration = 1600;
+    const duration = 3200;
     const start = performance.now();
     let lastTick = 0;
 

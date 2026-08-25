@@ -123,7 +123,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
         </div>
         <div className="relative z-40 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
           <div className="relative w-full">
-            <div className="flex h-12 items-center justify-between gap-2">
+            <div className="flex min-h-12 flex-wrap items-center justify-start gap-1">
               <div className="flex min-w-0 items-center gap-1">
                 <button type="button" onClick={onExit} disabled={isSpinning} className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40" aria-label="Exit game mode"><X className="h-3.5 w-3.5" strokeWidth={2} />Exit</button>
                 <button type="button" disabled={isSpinning} onClick={() => setFaceOff(false)} className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40" title="Standard layout"><Undo2 className="h-3.5 w-3.5" strokeWidth={2} />Standard</button>

@@ -45,37 +45,17 @@ export function FaceOffSettings({
   return (
     <div className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-2.5 shadow-soft">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">
-          Settings
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-fg-muted hover:text-fg"
-          aria-label="Close settings"
-        >
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">Settings</p>
+        <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-fg-muted hover:text-fg" aria-label="Close settings">
           <X className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
-        <UniqueDupesToggle
-          uniqueOnly={uniqueOnly}
-          onChange={onUniqueOnly}
-          disabled={disabled}
-        />
-        <QuickRollsToggle
-          quick={quickRolls}
-          onChange={onQuickRolls}
-          disabled={disabled}
-        />
+        <UniqueDupesToggle uniqueOnly={uniqueOnly} onChange={onUniqueOnly} disabled={disabled} />
+        <QuickRollsToggle quick={quickRolls} onChange={onQuickRolls} disabled={disabled} />
         <RollSfxToggle />
         {canResetUnique && (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onResetUnique}
-            className="flex h-11 items-center rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
-          >
+          <button type="button" disabled={disabled} onClick={onResetUnique} className="flex h-11 items-center rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40">
             Reset unique
           </button>
         )}
@@ -85,20 +65,7 @@ export function FaceOffSettings({
 }
 
 export function FaceOffHalf({
-  pick,
-  playerIndex,
-  isSpinning,
-  revealed,
-  reelKey,
-  perPlayerProfiles,
-  emptyHint,
-  stocks,
-  onSelectStocks,
-  wins,
-  losses,
-  view,
-  onToggleView,
-  usedIds,
+  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds,
 }: {
   pick: PlayerPick | null;
   playerIndex: number;
@@ -140,14 +107,12 @@ export function FaceOffHalf({
   );
 
   const topBar = (
-    <div className="relative flex h-9 items-center px-3">
-      <span className="relative z-10 inline-flex h-7 items-center rounded-full px-3 text-sm font-bold uppercase tracking-wider shadow-sm" style={{ background: pc.hex, color: playerBadgeFg(playerIndex) }}>
+    <div className="flex h-9 items-center gap-2 px-3">
+      <span className="inline-flex h-7 shrink-0 items-center rounded-full px-3 text-sm font-bold uppercase tracking-wider shadow-sm" style={{ background: pc.hex, color: playerBadgeFg(playerIndex) }}>
         P{playerIndex + 1}
       </span>
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="pointer-events-auto">{viewToggle}</div>
-      </div>
-      <span className="relative z-10 ml-auto tabular text-sm font-bold text-white drop-shadow-md">
+      <div className="min-w-0">{viewToggle}</div>
+      <span className="ml-auto shrink-0 tabular text-sm font-bold text-white drop-shadow-md">
         {wins}–{losses}
       </span>
     </div>
@@ -243,8 +208,7 @@ export function FaceOffHalf({
               <span className="tabular text-sm font-semibold text-white/90">{formatProbability(chance)}</span>
               {locked && (
                 <span className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] uppercase tracking-wide text-white/55">
-                  <Lock className="h-2.5 w-2.5" strokeWidth={2.5} />
-                  copies on edit
+                  <Lock className="h-2.5 w-2.5" strokeWidth={2.5} /> copies on edit
                 </span>
               )}
             </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Dices, LayoutGrid, Loader2, Lock, Maximize2, Minus, Plus, Star, Undo2, Users, X } from "lucide-react";
+import { Ban, Dices, LayoutGrid, Loader2, Lock, Maximize2, Minus, Plus, Settings, Star, Undo2, Users, X } from "lucide-react";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
@@ -66,6 +66,7 @@ export function GameMode({
   const [p1Stocks, setP1Stocks] = useState<number | null>(null);
   const [p2Stocks, setP2Stocks] = useState<number | null>(null);
   const [showMatchups, setShowMatchups] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [p1View, setP1View] = useState<"portrait" | "css">("portrait");
   const [p2View, setP2View] = useState<"portrait" | "css">("portrait");
   const timers = useRef<number[]>([]);
@@ -164,6 +165,7 @@ export function GameMode({
     if (!canRoll) return;
 
     saveStockResult();
+    setShowSettings(false);
 
     clearTimers();
     unlockRollSound();
@@ -298,7 +300,7 @@ export function GameMode({
 
         {/* Shared control strip in the middle (readable from either side) */}
         <div className="relative z-10 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
-          <div className="mx-auto w-full max-w-lg">
+          <div className="relative mx-auto w-full max-w-lg">
             {showMatchups ? (
               <MatchupSheet
                 games={stockGames}
@@ -309,95 +311,132 @@ export function GameMode({
                 onClose={() => setShowMatchups(false)}
               />
             ) : (
-              <div className="flex items-center gap-1 overflow-x-auto">
-                <button
-                  type="button"
-                  onClick={onExit}
-                  disabled={isSpinning}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
-                  aria-label="Exit game mode"
-                  title="Exit"
-                >
-                  <X className="h-4 w-4" strokeWidth={2} />
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isSpinning}
-                  onClick={disableFaceOff}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
-                  title="Standard layout"
-                  aria-label="Switch to standard layout"
-                >
-                  <Undo2 className="h-4 w-4" strokeWidth={2} />
-                </button>
-
-                <SetScoreButton
-                  games={stockGames}
-                  onClick={() => setShowMatchups(true)}
-                />
-
-                <UniqueDupesToggle
-                  uniqueOnly={uniqueOnly}
-                  onChange={setUniqueOnly}
-                  disabled={isSpinning}
-                />
-                <QuickRollsToggle
-                  quick={quickRolls}
-                  onChange={setQuickRolls}
-                  disabled={isSpinning}
-                />
-                <RollSfxToggle />
-                {uniqueOnly &&
-                  usedFighterIds.slice(0, 2).some((ids) => ids.length > 0) && (
+              <>
+                <div className="grid grid-cols-3 items-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
+                    <button
+                      type="button"
+                      onClick={onExit}
+                      disabled={isSpinning}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
+                      aria-label="Exit game mode"
+                      title="Exit"
+                    >
+                      <X className="h-4 w-4" strokeWidth={2} />
+                    </button>
                     <button
                       type="button"
                       disabled={isSpinning}
-                      onClick={resetUsedFighters}
-                      className="flex h-11 shrink-0 items-center rounded-[var(--radius-md)] border border-border bg-bg px-2 text-xs font-medium text-fg-muted"
-                      title="Allow previously rolled fighters again"
+                      onClick={disableFaceOff}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
+                      title="Standard layout"
+                      aria-label="Switch to standard layout"
                     >
-                      Reset
+                      <Undo2 className="h-4 w-4" strokeWidth={2} />
                     </button>
-                  )}
+                    <SetScoreButton
+                      games={stockGames}
+                      onClick={() => {
+                        setShowSettings(false);
+                        setShowMatchups(true);
+                      }}
+                    />
+                  </div>
 
-                <div className="ml-auto flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={spin}
-                    disabled={isSpinning || !canRoll}
-                    className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]",
-                      "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30",
-                      "disabled:pointer-events-none disabled:opacity-45",
-                    )}
-                    aria-label={
-                      uniqueExhausted
-                        ? "Reset unique"
-                        : !canRoll
-                          ? "No fighters"
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={spin}
+                      disabled={isSpinning || !canRoll}
+                      className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]",
+                        "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30",
+                        "disabled:pointer-events-none disabled:opacity-45",
+                      )}
+                      aria-label={
+                        uniqueExhausted
+                          ? "Reset unique"
+                          : !canRoll
+                            ? "No fighters"
+                            : canSave
+                              ? `Save ${p1Stocks}–${p2Stocks} and roll`
+                              : "Randomize"
+                      }
+                      title={
+                        uniqueExhausted
+                          ? "Reset unique"
                           : canSave
-                            ? `Save ${p1Stocks}–${p2Stocks} and roll`
+                            ? `Save ${p1Stocks}–${p2Stocks} · Roll`
                             : "Randomize"
-                    }
-                    title={
-                      uniqueExhausted
-                        ? "Reset unique"
-                        : canSave
-                          ? `Save ${p1Stocks}–${p2Stocks} · Roll`
-                          : "Randomize"
-                    }
-                  >
-                    {isSpinning ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : uniqueExhausted || !canRoll ? (
-                      <Ban className="h-5 w-5" />
-                    ) : (
-                      <Dices className="h-5 w-5" strokeWidth={2} />
-                    )}
-                  </button>
+                      }
+                    >
+                      {isSpinning ? (
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      ) : uniqueExhausted || !canRoll ? (
+                        <Ban className="h-6 w-6" />
+                      ) : (
+                        <Dices className="h-6 w-6" strokeWidth={2} />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowSettings((v) => !v)}
+                      className={cn(
+                        "flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] border bg-bg text-fg-muted hover:text-fg",
+                        showSettings
+                          ? "border-border-strong text-fg"
+                          : "border-border",
+                      )}
+                      aria-label="Roll settings"
+                      aria-pressed={showSettings}
+                      title="Sound, roll length, unique"
+                    >
+                      <Settings className="h-4 w-4" strokeWidth={2} />
+                    </button>
+                  </div>
                 </div>
-              </div>
+
+                {showSettings && (
+                  <>
+                    <div
+                      className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]"
+                      style={{ transform: "translateX(-50%) rotate(180deg)" }}
+                    >
+                      <FaceOffSettings
+                        uniqueOnly={uniqueOnly}
+                        onUniqueOnly={setUniqueOnly}
+                        quickRolls={quickRolls}
+                        onQuickRolls={setQuickRolls}
+                        canResetUnique={
+                          uniqueOnly &&
+                          usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)
+                        }
+                        onResetUnique={resetUsedFighters}
+                        disabled={isSpinning}
+                        onClose={() => setShowSettings(false)}
+                      />
+                    </div>
+                    <div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2">
+                      <FaceOffSettings
+                        uniqueOnly={uniqueOnly}
+                        onUniqueOnly={setUniqueOnly}
+                        quickRolls={quickRolls}
+                        onQuickRolls={setQuickRolls}
+                        canResetUnique={
+                          uniqueOnly &&
+                          usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)
+                        }
+                        onResetUnique={resetUsedFighters}
+                        disabled={isSpinning}
+                        onClose={() => setShowSettings(false)}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -638,6 +677,67 @@ export function GameMode({
             )}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function FaceOffSettings({
+  uniqueOnly,
+  onUniqueOnly,
+  quickRolls,
+  onQuickRolls,
+  canResetUnique,
+  onResetUnique,
+  disabled,
+  onClose,
+}: {
+  uniqueOnly: boolean;
+  onUniqueOnly: (v: boolean) => void;
+  quickRolls: boolean;
+  onQuickRolls: (v: boolean) => void;
+  canResetUnique: boolean;
+  onResetUnique: () => void;
+  disabled?: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-2.5 shadow-soft">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">
+          Settings
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-fg-muted hover:text-fg"
+          aria-label="Close settings"
+        >
+          <X className="h-3.5 w-3.5" strokeWidth={2} />
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <UniqueDupesToggle
+          uniqueOnly={uniqueOnly}
+          onChange={onUniqueOnly}
+          disabled={disabled}
+        />
+        <QuickRollsToggle
+          quick={quickRolls}
+          onChange={onQuickRolls}
+          disabled={disabled}
+        />
+        <RollSfxToggle />
+        {canResetUnique && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onResetUnique}
+            className="flex h-11 items-center rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
+          >
+            Reset unique
+          </button>
+        )}
       </div>
     </div>
   );

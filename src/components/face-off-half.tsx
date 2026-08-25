@@ -5,6 +5,7 @@ import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { QuickRollsToggle } from "@/components/quick-rolls-toggle";
 import { CssRosterBoard } from "@/components/css-roster-board";
 import {
+  ROSTER,
   computeProbabilities,
   fighterPortraitUrl,
   fighterTileStyle,
@@ -99,6 +100,13 @@ export function FaceOffHalf({
   const portrait = pick ? fighterPortraitUrl(pick.fighter.id) : null;
   const tile = pick ? fighterTileStyle(pick.fighter.id) : undefined;
   const usedSet = useMemo(() => new Set(usedIds), [usedIds]);
+  const zeroIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const f of ROSTER) {
+      if (getWeightValue(liveProfile.weights, f.id) <= 0) s.add(f.id);
+    }
+    return s;
+  }, [liveProfile.weights]);
   const foeIndex = playerIndex === 0 ? 1 : 0;
   const foeColor = playerColor(foeIndex);
   const showFoe = Boolean(opponentId) && revealed && !isSpinning;
@@ -145,6 +153,7 @@ export function FaceOffHalf({
         <div className="min-h-0 flex-1 px-[2px]">
           <CssRosterBoard
             used={usedSet}
+            zeroIds={zeroIds}
             highlightId={pick?.fighter.id ?? null}
             pulse={Boolean(pick) && revealed && !isSpinning}
             pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}

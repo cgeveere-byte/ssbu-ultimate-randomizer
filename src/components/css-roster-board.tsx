@@ -24,6 +24,7 @@ export function CssRosterBoard({
   markColor,
   markLabel,
   marks,
+  zeroIds,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
@@ -37,9 +38,11 @@ export function CssRosterBoard({
   markColor?: string;
   markLabel?: string;
   marks?: CssMark[];
+  zeroIds?: ReadonlySet<string>;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
+  const zeroSet = zeroIds ?? EMPTY;
   const allMarks = useMemo(() => {
     const list = marks ? marks.slice() : [];
     if (markId && markColor && !list.some((m) => m.id === markId)) {
@@ -97,10 +100,11 @@ export function CssRosterBoard({
                         : fighter.id
                     }
                     fighter={fighter}
-                    used={usedSet.has(fighter.id) && !liveIds.has(fighter.id)}
+                    used={usedSet.has(fighter.id) && !liveIds.has(fighter.id) && !zeroSet.has(fighter.id)}
+                    zeroed={zeroSet.has(fighter.id)}
                     highlight={highlightId === fighter.id}
                     pulse={pulse && highlightId === fighter.id}
-                    dimmed={dimOthers && !liveIds.has(fighter.id)}
+                    dimmed={dimOthers && !liveIds.has(fighter.id) && !zeroSet.has(fighter.id)}
                     tileMarks={allMarks.filter((m) => m.id === fighter.id)}
                     fill={fill}
                     onSelect={onSelect}
@@ -135,10 +139,11 @@ export function CssRosterBoard({
                           : fighter.id
                       }
                       fighter={fighter}
-                      used={usedSet.has(fighter.id) && !liveIds.has(fighter.id)}
+                      used={usedSet.has(fighter.id) && !liveIds.has(fighter.id) && !zeroSet.has(fighter.id)}
+                      zeroed={zeroSet.has(fighter.id)}
                       highlight={highlightId === fighter.id}
                       pulse={pulse && highlightId === fighter.id}
-                      dimmed={dimOthers && !liveIds.has(fighter.id)}
+                      dimmed={dimOthers && !liveIds.has(fighter.id) && !zeroSet.has(fighter.id)}
                       tileMarks={allMarks.filter((m) => m.id === fighter.id)}
                       fill={fill}
                       onSelect={onSelect}
@@ -158,6 +163,7 @@ const EMPTY = new Set<string>();
 function CssTile({
   fighter,
   used,
+  zeroed,
   highlight,
   pulse,
   dimmed,
@@ -167,6 +173,7 @@ function CssTile({
 }: {
   fighter: Fighter;
   used: boolean;
+  zeroed?: boolean;
   highlight: boolean;
   pulse?: boolean;
   dimmed?: boolean;
@@ -176,11 +183,13 @@ function CssTile({
 }) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
-  const title = used
-    ? `${fighter.name} · already used`
-    : tileMarks.length > 0
-      ? `${fighter.name} · ${tileMarks.map((m) => m.label).join(", ")}`
-      : fighter.name;
+  const title = zeroed
+    ? `${fighter.name} · 0%`
+    : used
+      ? `${fighter.name} · already used`
+      : tileMarks.length > 0
+        ? `${fighter.name} · ${tileMarks.map((m) => m.label).join(", ")}`
+        : fighter.name;
   const Tag = onSelect ? "button" : "div";
   const marked = tileMarks.length > 0;
 
@@ -206,7 +215,8 @@ function CssTile({
           className={cn(
             "h-full w-full object-cover object-center transition-[filter,opacity] duration-300",
             used && "grayscale opacity-40",
-            !used && dimmed && "saturate-[.4] brightness-[.82] contrast-[.95]",
+            zeroed && "grayscale opacity-50",
+            !used && !zeroed && dimmed && "saturate-[.4] brightness-[.82] contrast-[.95]",
             (highlight || pulse || marked) && "brightness-110",
           )}
         />
@@ -215,7 +225,8 @@ function CssTile({
           className={cn(
             "flex h-full w-full items-center justify-center text-[7px] font-semibold text-fg sm:text-[9px]",
             used && "grayscale opacity-40",
-            !used && dimmed && "saturate-[.4] brightness-[.82]",
+            zeroed && "grayscale opacity-50",
+            !used && !zeroed && dimmed && "saturate-[.4] brightness-[.82]",
           )}
           style={tile}
           aria-hidden
@@ -274,6 +285,13 @@ function CssTile({
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <span className="absolute h-[78%] w-[2px] rotate-45 rounded-full bg-white/80" />
           <span className="absolute h-[78%] w-[2px] -rotate-45 rounded-full bg-white/80" />
+        </div>
+      )}
+      {zeroed && (
+        <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center bg-black/50">
+          <span className="text-[8px] font-black tabular leading-none text-white sm:text-[10px]" style={{ textShadow: "0 1px 2px #000" }}>
+            0%
+          </span>
         </div>
       )}
     </Tag>

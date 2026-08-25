@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Clock, Dices, Loader2, Minus, Plus, Settings, Undo2, Users, X } from "lucide-react";
+import { Ban, Clock, Dices, LayoutGrid, Loader2, Maximize2, Minus, Plus, Settings, Undo2, Users, X } from "lucide-react";
+import { CssRosterBoard, type CssMark } from "@/components/css-roster-board";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
@@ -42,6 +43,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const [showHistory, setShowHistory] = useState(false);
   const [p1View, setP1View] = useState<"portrait" | "css">("css");
   const [p2View, setP2View] = useState<"portrait" | "css">("css");
+  const [gmView, setGmView] = useState<"portraits" | "css">("css");
   const timers = useRef<number[]>([]);
 
   const stockGames = useRandomizerStore((s) => s.stockGames);
@@ -110,6 +112,18 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const shown = displayPicks.length > 0 ? displayPicks : lastPicks;
   const cols = Math.min(shown.length || playerCount, 4);
   const uniqueExhausted = uniqueOnly && !canRoll && usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0);
+  const unionUsed = useMemo(() => {
+    const s = new Set<string>();
+    for (let i = 0; i < playerCount; i++) {
+      for (const id of usedFighterIds[i] ?? []) s.add(id);
+    }
+    return s;
+  }, [usedFighterIds, playerCount]);
+  const cssMarks: CssMark[] = shown.map((p, i) => ({
+    id: p.fighter.id,
+    color: playerColor(i).hex,
+    label: `P${i + 1}`,
+  }));
 
   if (faceOff && playerCount === 2) {
     const p1 = shown[0] ?? null; const p2 = shown[1] ?? null;
@@ -152,8 +166,35 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
         <button type="button" onClick={onExit} disabled={isSpinning} className="flex h-11 items-center gap-2 rounded-[var(--radius-md)] border border-border bg-bg-elevated px-3 text-sm font-medium text-fg-muted transition-colors hover:border-border-strong hover:text-fg disabled:opacity-40" aria-label="Exit game mode"><X className="h-4 w-4" strokeWidth={2} />Exit</button>
         <div className="min-w-0 text-center"><p className="text-xs font-medium uppercase tracking-[0.14em] text-fg-subtle">Game mode</p><p className="truncate text-sm text-fg-muted">{perPlayerProfiles ? "Per-player profiles \u00b7 read-only" : `Profile \u00b7 ${active.name}`}</p></div>
-        <div className="w-[4.5rem] sm:w-[5.5rem]" aria-hidden />
+        <button type="button" onClick={() => setGmView((v) => (v === "css" ? "portraits" : "css"))} className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg-elevated px-3 text-xs font-medium text-fg-muted hover:text-fg" title={gmView === "css" ? "Player portraits" : "Shared CSS"}>
+          {gmView === "css" ? <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} /> : <LayoutGrid className="h-3.5 w-3.5" strokeWidth={2} />}
+          {gmView === "css" ? "Portraits" : "CSS"}
+        </button>
       </div>
+      {gmView === "css" ? (
+        <div className="flex min-h-0 flex-1 flex-col bg-black">
+          <div className="min-h-0 flex-1">
+            <CssRosterBoard
+              fill
+              className="h-full"
+              used={unionUsed}
+              marks={cssMarks}
+              dimOthers={revealed && !isSpinning && shown.length > 0}
+            />
+          </div>
+          {shown.length > 0 && (
+            <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-black px-3 py-1.5">
+              {shown.map((pick, i) => (
+                <span key={`legend-${i}`} className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-white">
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: playerColor(i).hex }} />
+                  <span className="text-white/55">P{i + 1}</span>
+                  <span className="truncate">{pick.fighter.name}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
         {shown.length === 0 ? (
           <div className="flex flex-col items-center gap-4 text-center">
@@ -179,6 +220,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
           </div>
         )}
       </div>
+      )}
       <div className="shrink-0 border-t border-border bg-bg-elevated px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">

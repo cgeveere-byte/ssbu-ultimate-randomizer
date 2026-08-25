@@ -9,6 +9,8 @@ import {
 import { cn } from "@/lib/cn";
 import { useMemo } from "react";
 
+export type CssMark = { id: string; color: string; label: string };
+
 export function CssRosterBoard({
   used,
   highlightId,
@@ -21,6 +23,7 @@ export function CssRosterBoard({
   markId = null,
   markColor,
   markLabel,
+  marks,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
@@ -33,9 +36,22 @@ export function CssRosterBoard({
   markId?: string | null;
   markColor?: string;
   markLabel?: string;
+  marks?: CssMark[];
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
+  const allMarks = useMemo(() => {
+    const list = marks ? marks.slice() : [];
+    if (markId && markColor && !list.some((m) => m.id === markId)) {
+      list.push({ id: markId, color: markColor, label: markLabel ?? "" });
+    }
+    return list;
+  }, [marks, markId, markColor, markLabel]);
+  const liveIds = useMemo(() => {
+    const s = new Set(allMarks.map((m) => m.id));
+    if (highlightId) s.add(highlightId);
+    return s;
+  }, [allMarks, highlightId]);
 
   return (
     <div
@@ -52,7 +68,8 @@ export function CssRosterBoard({
     >
       {rows.map((row, rowIndex) => {
         const rowHasPick = Boolean(
-          pulse && highlightId && row.some((f) => f.id === highlightId),
+          (pulse && highlightId && row.some((f) => f.id === highlightId)) ||
+            row.some((f) => liveIds.has(f.id)),
         );
         return (
         <ul
@@ -71,7 +88,7 @@ export function CssRosterBoard({
                   id={`css-tile-${fighter.id}`}
                   className={cn(
                     fill && "min-h-0 h-full",
-                    pulse && highlightId === fighter.id && "relative z-30 overflow-visible",
+                    liveIds.has(fighter.id) && "relative z-30 overflow-visible",
                   )}
                 >
                   <CssTile
@@ -81,13 +98,11 @@ export function CssRosterBoard({
                         : fighter.id
                     }
                     fighter={fighter}
-                    used={usedSet.has(fighter.id) && fighter.id !== highlightId}
+                    used={usedSet.has(fighter.id) && !liveIds.has(fighter.id)}
                     highlight={highlightId === fighter.id}
                     pulse={pulse && highlightId === fighter.id}
-                    dimmed={dimOthers && fighter.id !== highlightId && fighter.id !== markId}
-                    marked={markId === fighter.id}
-                    markColor={markColor}
-                    markLabel={markLabel}
+                    dimmed={dimOthers && !liveIds.has(fighter.id)}
+                    tileMarks={allMarks.filter((m) => m.id === fighter.id)}
                     fill={fill}
                     onSelect={onSelect}
                   />
@@ -111,7 +126,7 @@ export function CssRosterBoard({
                   id={`css-tile-${fighter.id}`}
                   className={cn(
                     fill && "min-h-0 h-full",
-                    pulse && highlightId === fighter.id && "relative z-30 overflow-visible",
+                    liveIds.has(fighter.id) && "relative z-30 overflow-visible",
                   )}
                 >
                     <CssTile
@@ -121,13 +136,11 @@ export function CssRosterBoard({
                           : fighter.id
                       }
                       fighter={fighter}
-                      used={usedSet.has(fighter.id) && fighter.id !== highlightId}
+                      used={usedSet.has(fighter.id) && !liveIds.has(fighter.id)}
                       highlight={highlightId === fighter.id}
                       pulse={pulse && highlightId === fighter.id}
-                      dimmed={dimOthers && fighter.id !== highlightId && fighter.id !== markId}
-                      marked={markId === fighter.id}
-                      markColor={markColor}
-                      markLabel={markLabel}
+                      dimmed={dimOthers && !liveIds.has(fighter.id)}
+                      tileMarks={allMarks.filter((m) => m.id === fighter.id)}
                       fill={fill}
                       onSelect={onSelect}
                     />
@@ -149,9 +162,7 @@ function CssTile({
   highlight,
   pulse,
   dimmed,
-  marked,
-  markColor,
-  markLabel,
+  tileMarks,
   fill,
   onSelect,
 }: {
@@ -160,16 +171,19 @@ function CssTile({
   highlight: boolean;
   pulse?: boolean;
   dimmed?: boolean;
-  marked?: boolean;
-  markColor?: string;
-  markLabel?: string;
+  tileMarks: CssMark[];
   fill?: boolean;
   onSelect?: (id: string) => void;
 }) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
-  const title = used ? `${fighter.name} · already used` : fighter.name;
+  const title = used
+    ? `${fighter.name} · already used`
+    : tileMarks.length > 0
+      ? `${fighter.name} · ${tileMarks.map((m) => m.label).join(", ")}`
+      : fighter.name;
   const Tag = onSelect ? "button" : "div";
+  const marked = tileMarks.length > 0;
 
   return (
     <Tag
@@ -194,7 +208,7 @@ function CssTile({
             "h-full w-full object-cover object-center transition-[filter,opacity] duration-300",
             used && "grayscale opacity-40",
             !used && dimmed && "saturate-[.4] brightness-[.82] contrast-[.95]",
-            (highlight || pulse) && "brightness-110",
+            (highlight || pulse || marked) && "brightness-110",
           )}
         />
       ) : (
@@ -220,21 +234,42 @@ function CssTile({
         </>
       )}
 
-      {marked && markColor && (
-        <>
-          <span
-            className="pointer-events-none absolute inset-0 z-[1] rounded-[2px]"
-            style={{ boxShadow: `inset 0 0 0 1.5px ${markColor}` }}
-          />
-          <span
-            className="pointer-events-none absolute right-0 top-0 z-[2] h-0 w-0"
-            style={{
-              borderTop: `9px solid ${markColor}`,
-              borderLeft: "9px solid transparent",
-            }}
-            title={markLabel ? `${markLabel} pick` : "Opponent pick"}
-          />
-        </>
+      {marked &&
+        tileMarks.map((m, i) => {
+          if (i > 1) return null;
+          const left = i === 1;
+          return (
+            <span
+              key={m.label}
+              className={cn(
+                "pointer-events-none absolute top-0 z-[2] h-0 w-0",
+                left ? "left-0" : "right-0",
+              )}
+              style={
+                left
+                  ? { borderTop: `9px solid ${m.color}`, borderRight: "9px solid transparent" }
+                  : { borderTop: `9px solid ${m.color}`, borderLeft: "9px solid transparent" }
+              }
+              title={`${m.label} pick`}
+            />
+          );
+        })}
+      {marked && tileMarks.length === 1 && (
+        <span
+          className="pointer-events-none absolute inset-0 z-[1] rounded-[2px]"
+          style={{ boxShadow: `inset 0 0 0 1.5px ${tileMarks[0].color}` }}
+        />
+      )}
+      {marked && tileMarks.length > 1 && (
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex h-[3px]">
+          {tileMarks.map((m) => (
+            <span
+              key={m.label}
+              className="min-w-0 flex-1"
+              style={{ background: m.color }}
+            />
+          ))}
+        </span>
       )}
       {used && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

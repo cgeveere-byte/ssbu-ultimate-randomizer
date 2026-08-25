@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Dices, LayoutGrid, Loader2, Lock, Minus, Plus, RotateCcw, Star, Users, X } from "lucide-react";
+import { Ban, Dices, LayoutGrid, Loader2, Lock, Maximize2, Minus, Plus, RotateCcw, Star, Users, X } from "lucide-react";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { QuickRollsToggle, rollDurationMs } from "@/components/quick-rolls-toggle";
 import { MatchupSheet, SetScoreButton } from "@/components/stock-session-panel";
-import { UsedRosterOverlay } from "@/components/css-roster-board";
+import { CssRosterBoard } from "@/components/css-roster-board";
 import {
   type Fighter,
   ROSTER,
@@ -60,7 +60,8 @@ export function GameMode({ onExit }: { onExit: () => void }) {
   const [p1Stocks, setP1Stocks] = useState<number | null>(null);
   const [p2Stocks, setP2Stocks] = useState<number | null>(null);
   const [showMatchups, setShowMatchups] = useState(false);
-  const [showUsedRoster, setShowUsedRoster] = useState(false);
+  const [p1View, setP1View] = useState<"portrait" | "css">("portrait");
+  const [p2View, setP2View] = useState<"portrait" | "css">("portrait");
   const timers = useRef<number[]>([]);
 
   const stockGames = useRandomizerStore((s) => s.stockGames);
@@ -281,6 +282,11 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             onSelectStocks={selectP2Stocks}
             wins={p2Wins}
             losses={p1Wins}
+            view={p2View}
+            onToggleView={() =>
+              setP2View((v) => (v === "css" ? "portrait" : "css"))
+            }
+            usedIds={usedFighterIds[1] ?? []}
           />
         </div>
 
@@ -327,20 +333,6 @@ export function GameMode({ onExit }: { onExit: () => void }) {
                     games={stockGames}
                     onClick={() => setShowMatchups(true)}
                   />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMatchups(false);
-                      setShowUsedRoster(true);
-                    }}
-                    disabled={isSpinning}
-                    title="Used fighters on the character-select grid"
-                    className="flex h-11 items-center gap-1.5 rounded-[var(--radius-md)] border border-border-strong bg-bg px-2.5 text-xs font-semibold text-fg-muted hover:text-fg disabled:opacity-40"
-                  >
-                    <LayoutGrid className="h-3.5 w-3.5" strokeWidth={2} />
-                    Used
-                  </button>
 
                   <UniqueDupesToggle
                     uniqueOnly={uniqueOnly}
@@ -434,16 +426,13 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             onSelectStocks={selectP1Stocks}
             wins={p1Wins}
             losses={p2Wins}
+            view={p1View}
+            onToggleView={() =>
+              setP1View((v) => (v === "css" ? "portrait" : "css"))
+            }
+            usedIds={usedFighterIds[0] ?? []}
           />
         </div>
-
-        {showUsedRoster && (
-          <UsedRosterOverlay
-            p1Used={usedFighterIds[0] ?? []}
-            p2Used={usedFighterIds[1] ?? []}
-            onClose={() => setShowUsedRoster(false)}
-          />
-        )}
       </div>
     );
   }
@@ -677,6 +666,9 @@ function FaceOffHalf({
   onSelectStocks,
   wins,
   losses,
+  view,
+  onToggleView,
+  usedIds,
 }: {
   pick: PlayerPick | null;
   playerIndex: number;
@@ -689,6 +681,9 @@ function FaceOffHalf({
   onSelectStocks: (n: number) => void;
   wins: number;
   losses: number;
+  view: "portrait" | "css";
+  onToggleView: () => void;
+  usedIds: readonly string[];
 }) {
   const pc = playerColor(playerIndex);
   const profiles = useRandomizerStore((s) => s.profiles);
@@ -714,6 +709,100 @@ function FaceOffHalf({
 
   const portrait = pick ? fighterPortraitUrl(pick.fighter.id) : null;
   const tile = pick ? fighterTileStyle(pick.fighter.id) : undefined;
+  const usedSet = useMemo(() => new Set(usedIds), [usedIds]);
+
+  const viewToggle = (
+    <button
+      type="button"
+      onClick={onToggleView}
+      title={view === "css" ? "Large portrait" : "Character select"}
+      className="flex h-7 items-center gap-1 rounded-full border border-white/25 bg-black/40 px-2 text-[11px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm hover:bg-black/55"
+    >
+      {view === "css" ? (
+        <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
+      ) : (
+        <LayoutGrid className="h-3.5 w-3.5" strokeWidth={2} />
+      )}
+      {view === "css" ? "Face" : "CSS"}
+    </button>
+  );
+
+  const topBar = (
+    <div className="flex items-start justify-between gap-2 px-3 pt-2.5">
+      <span
+        className="inline-flex h-7 items-center rounded-full px-3 text-sm font-bold uppercase tracking-wider shadow-sm"
+        style={{ background: pc.hex, color: playerBadgeFg(playerIndex) }}
+      >
+        P{playerIndex + 1}
+      </span>
+      {viewToggle}
+      <span className="tabular text-sm font-bold text-white drop-shadow-md">
+        {wins}–{losses}
+      </span>
+    </div>
+  );
+
+  const stocksRow = !isSpinning && (
+    <div className="w-full max-w-sm">
+      <p className="mb-1 text-center text-[10px] font-medium uppercase tracking-wide text-white/60">
+        Stocks left
+      </p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
+          const selected = stocks === n;
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onSelectStocks(n)}
+              className={cn(
+                "flex h-11 items-center justify-center rounded-[var(--radius-md)] text-lg font-bold tabular backdrop-blur-sm",
+                selected
+                  ? "text-bg"
+                  : "border border-white/25 bg-black/40 text-white hover:bg-black/55",
+              )}
+              style={
+                selected
+                  ? { background: pc.hex, color: playerBadgeFg(playerIndex) }
+                  : undefined
+              }
+            >
+              {n}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if (view === "css") {
+    return (
+      <div
+        className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-black"
+        style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}
+      >
+        <div className="relative z-10 shrink-0">{topBar}</div>
+        <CssRosterBoard
+          used={usedSet}
+          highlightId={pick?.fighter.id ?? null}
+          className="min-h-0 w-full flex-1"
+        />
+        <div className="z-10 flex shrink-0 flex-col items-center gap-1.5 px-3 pb-2.5 pt-1">
+          {pick ? (
+            <p
+              className="line-clamp-1 text-center text-lg font-bold tracking-tight text-white"
+              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
+            >
+              {isSpinning ? "…" : pick.fighter.name}
+            </p>
+          ) : (
+            <p className="text-center text-xs text-white/50">{emptyHint}</p>
+          )}
+          {stocksRow}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -775,17 +864,7 @@ function FaceOffHalf({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/70 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
 
-      <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between px-3 pt-2.5">
-        <span
-          className="inline-flex h-7 items-center rounded-full px-3 text-sm font-bold uppercase tracking-wider shadow-sm"
-          style={{ background: pc.hex, color: playerBadgeFg(playerIndex) }}
-        >
-          P{playerIndex + 1}
-        </span>
-        <span className="tabular text-sm font-bold text-white drop-shadow-md">
-          {wins}–{losses}
-        </span>
-      </div>
+      <div className="absolute inset-x-0 top-0 z-10">{topBar}</div>
 
       {pick && (
         <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-2 px-3 pb-2.5 pt-8">
@@ -858,38 +937,7 @@ function FaceOffHalf({
             </button>
           </div>
 
-          {!isSpinning && (
-            <div className="w-full max-w-sm">
-              <p className="mb-1 text-center text-[10px] font-medium uppercase tracking-wide text-white/60">
-                Stocks left
-              </p>
-              <div className="grid grid-cols-4 gap-1.5">
-                {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
-                  const selected = stocks === n;
-                  return (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => onSelectStocks(n)}
-                      className={cn(
-                        "flex h-11 items-center justify-center rounded-[var(--radius-md)] text-lg font-bold tabular backdrop-blur-sm",
-                        selected
-                          ? "text-bg"
-                          : "border border-white/25 bg-black/40 text-white hover:bg-black/55",
-                      )}
-                      style={
-                        selected
-                          ? { background: pc.hex, color: playerBadgeFg(playerIndex) }
-                          : undefined
-                      }
-                    >
-                      {n}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {stocksRow}
         </div>
       )}
     </div>

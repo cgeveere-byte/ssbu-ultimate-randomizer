@@ -8,21 +8,18 @@ import {
   fighterTileStyle,
   initials,
 } from "@/lib/roster";
-import { playerBadgeFg, playerColor } from "@/lib/player-colors";
+import { playerColor } from "@/lib/player-colors";
 import { cn } from "@/lib/cn";
 
 export function CssRosterBoard({
-  p1Used,
-  p2Used,
+  used,
   className,
 }: {
-  p1Used?: ReadonlySet<string>;
-  p2Used?: ReadonlySet<string>;
+  used?: ReadonlySet<string>;
   className?: string;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
-  const p1 = p1Used ?? EMPTY;
-  const p2 = p2Used ?? EMPTY;
+  const usedSet = used ?? EMPTY;
 
   return (
     <div className={cn("flex flex-col gap-[2px] bg-black p-[2px]", className)}>
@@ -35,7 +32,7 @@ export function CssRosterBoard({
           {row.length === CSS_COLUMNS
             ? row.map((fighter) => (
                 <li key={fighter.id}>
-                  <CssTile fighter={fighter} p1={p1.has(fighter.id)} p2={p2.has(fighter.id)} />
+                  <CssTile fighter={fighter} used={usedSet.has(fighter.id)} />
                 </li>
               ))
             : Array.from({ length: CSS_COLUMNS }, (_, col) => {
@@ -44,7 +41,7 @@ export function CssRosterBoard({
                 if (!fighter) return <li key={`pad-${col}`} aria-hidden />;
                 return (
                   <li key={fighter.id}>
-                    <CssTile fighter={fighter} p1={p1.has(fighter.id)} p2={p2.has(fighter.id)} />
+                    <CssTile fighter={fighter} used={usedSet.has(fighter.id)} />
                   </li>
                 );
               })}
@@ -56,27 +53,10 @@ export function CssRosterBoard({
 
 const EMPTY = new Set<string>();
 
-function CssTile({
-  fighter,
-  p1,
-  p2,
-}: {
-  fighter: Fighter;
-  p1: boolean;
-  p2: boolean;
-}) {
+function CssTile({ fighter, used }: { fighter: Fighter; used: boolean }) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
-  const both = p1 && p2;
-  const used = p1 || p2;
-  const p1c = playerColor(0);
-  const p2c = playerColor(1);
-  const title = [
-    fighter.name,
-    p1 && p2 ? "used by P1 and P2" : p1 ? "used by P1" : p2 ? "used by P2" : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const title = used ? `${fighter.name} · already used` : fighter.name;
 
   return (
     <div className="relative aspect-square overflow-hidden rounded-[2px] bg-bg-elevated" title={title}>
@@ -87,15 +67,14 @@ function CssTile({
           draggable={false}
           className={cn(
             "h-full w-full object-cover object-center",
-            both && "grayscale opacity-45",
-            used && !both && "opacity-90",
+            used && "grayscale opacity-40",
           )}
         />
       ) : (
         <div
           className={cn(
             "flex h-full w-full items-center justify-center text-[7px] font-semibold text-fg sm:text-[9px]",
-            both && "grayscale opacity-45",
+            used && "grayscale opacity-40",
           )}
           style={tile}
           aria-hidden
@@ -104,28 +83,11 @@ function CssTile({
         </div>
       )}
 
-      {both && (
+      {used && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="absolute h-[78%] w-[2px] rotate-45 rounded-full bg-white/85" />
-          <span className="absolute h-[78%] w-[2px] -rotate-45 rounded-full bg-white/85" />
+          <span className="absolute h-[78%] w-[2px] rotate-45 rounded-full bg-white/80" />
+          <span className="absolute h-[78%] w-[2px] -rotate-45 rounded-full bg-white/80" />
         </div>
-      )}
-
-      {p1 && (
-        <span
-          className="absolute left-0 top-0 flex h-[42%] min-h-[10px] min-w-[10px] items-center justify-center rounded-br-[3px] px-[2px] text-[7px] font-black leading-none sm:text-[8px]"
-          style={{ background: p1c.hex, color: playerBadgeFg(0) }}
-        >
-          1
-        </span>
-      )}
-      {p2 && (
-        <span
-          className="absolute right-0 top-0 flex h-[42%] min-h-[10px] min-w-[10px] items-center justify-center rounded-bl-[3px] px-[2px] text-[7px] font-black leading-none sm:text-[8px]"
-          style={{ background: p2c.hex, color: playerBadgeFg(1) }}
-        >
-          2
-        </span>
       )}
     </div>
   );
@@ -163,54 +125,45 @@ export function UsedRosterOverlay({
         className="flex min-h-0 flex-1 flex-col overflow-hidden p-2"
         style={{ transform: "rotate(180deg)" }}
       >
-        <CssRosterBoard p1Used={p1Set} p2Used={p2Set} className="min-h-0 w-full flex-1" />
+        <CssRosterBoard used={p2Set} className="min-h-0 w-full flex-1" />
         <UsedBoardHeader
-          p1Count={p1Set.size}
-          p2Count={p2Set.size}
-          p1c={p1c.hex}
-          p2c={p2c.hex}
+          label="P2 used"
+          count={p2Set.size}
+          color={p2c.hex}
           onClose={onClose}
         />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
         <UsedBoardHeader
-          p1Count={p1Set.size}
-          p2Count={p2Set.size}
-          p1c={p1c.hex}
-          p2c={p2c.hex}
+          label="P1 used"
+          count={p1Set.size}
+          color={p1c.hex}
           onClose={onClose}
         />
-        <CssRosterBoard p1Used={p1Set} p2Used={p2Set} className="min-h-0 w-full flex-1" />
+        <CssRosterBoard used={p1Set} className="min-h-0 w-full flex-1" />
       </div>
     </div>
   );
 }
 
 function UsedBoardHeader({
-  p1Count,
-  p2Count,
-  p1c,
-  p2c,
+  label,
+  count,
+  color,
   onClose,
 }: {
-  p1Count: number;
-  p2Count: number;
-  p1c: string;
-  p2c: string;
+  label: string;
+  count: number;
+  color: string;
   onClose: () => void;
 }) {
   return (
     <div className="flex items-center gap-2 py-1.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">
-        Used
+      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color }}>
+        {label}
       </p>
-      <span className="tabular text-xs font-bold" style={{ color: p1c }}>
-        P1 {p1Count}
-      </span>
-      <span className="tabular text-xs font-bold" style={{ color: p2c }}>
-        P2 {p2Count}
-      </span>
+      <span className="tabular text-xs font-bold text-white/80">{count}</span>
       <span className="flex-1" />
       <button
         type="button"

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Dices, Loader2, Lock, Minus, Plus, RotateCcw, Star, Users, X } from "lucide-react";
+import { Ban, Dices, LayoutGrid, Loader2, Lock, Minus, Plus, RotateCcw, Star, Users, X } from "lucide-react";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { QuickRollsToggle, rollDurationMs } from "@/components/quick-rolls-toggle";
 import { MatchupSheet, SetScoreButton } from "@/components/stock-session-panel";
+import { UsedRosterOverlay } from "@/components/css-roster-board";
 import {
   type Fighter,
   ROSTER,
@@ -59,6 +60,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
   const [p1Stocks, setP1Stocks] = useState<number | null>(null);
   const [p2Stocks, setP2Stocks] = useState<number | null>(null);
   const [showMatchups, setShowMatchups] = useState(false);
+  const [showUsedRoster, setShowUsedRoster] = useState(false);
   const timers = useRef<number[]>([]);
 
   const stockGames = useRandomizerStore((s) => s.stockGames);
@@ -326,6 +328,20 @@ export function GameMode({ onExit }: { onExit: () => void }) {
                     onClick={() => setShowMatchups(true)}
                   />
 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMatchups(false);
+                      setShowUsedRoster(true);
+                    }}
+                    disabled={isSpinning}
+                    title="Used fighters on the character-select grid"
+                    className="flex h-11 items-center gap-1.5 rounded-[var(--radius-md)] border border-border-strong bg-bg px-2.5 text-xs font-semibold text-fg-muted hover:text-fg disabled:opacity-40"
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" strokeWidth={2} />
+                    Used
+                  </button>
+
                   <UniqueDupesToggle
                     uniqueOnly={uniqueOnly}
                     onChange={setUniqueOnly}
@@ -420,6 +436,14 @@ export function GameMode({ onExit }: { onExit: () => void }) {
             losses={p2Wins}
           />
         </div>
+
+        {showUsedRoster && (
+          <UsedRosterOverlay
+            p1Used={usedFighterIds[0] ?? []}
+            p2Used={usedFighterIds[1] ?? []}
+            onClose={() => setShowUsedRoster(false)}
+          />
+        )}
       </div>
     );
   }

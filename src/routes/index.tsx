@@ -84,8 +84,8 @@ function AppShell() {
                   type="button"
                   onClick={() => setGameMode(true)}
                   className={cn(
-                    "game-mode-rainbow flex items-center gap-2 rounded-[var(--radius-md)] font-semibold transition-opacity duration-150 hover:opacity-90",
-                    twoPlayer ? "h-12 px-4 text-sm" : "h-10 px-3 text-xs",
+                    "game-mode-rainbow flex h-10 items-center gap-2 rounded-[var(--radius-md)] font-semibold transition-opacity duration-150 hover:opacity-90",
+                    twoPlayer ? "px-4 text-sm" : "px-3 text-xs",
                   )}
                 >
                   {twoPlayer ? (

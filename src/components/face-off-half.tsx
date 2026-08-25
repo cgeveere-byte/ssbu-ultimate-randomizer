@@ -139,7 +139,14 @@ export function FaceOffHalf({
       <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-black" style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}>
         <div className="relative z-10 shrink-0">{topBar}</div>
         <div className="min-h-0 flex-1 px-[2px]">
-          <CssRosterBoard used={usedSet} highlightId={pick?.fighter.id ?? null} fill className="h-full" />
+          <CssRosterBoard
+            used={usedSet}
+            highlightId={pick?.fighter.id ?? null}
+            pulse={Boolean(pick) && revealed && !isSpinning}
+            pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
+            fill
+            className="h-full"
+          />
         </div>
         <div className="z-10 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
           <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>

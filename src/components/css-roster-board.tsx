@@ -168,6 +168,8 @@ function CssTile({
         <>
           <span className="css-flash-wash" />
           <span className="css-flash-shimmer" />
+          <span className="css-flash-radial" />
+          <span className="css-flash-radial css-flash-radial-delayed" />
         </>
       )}
 

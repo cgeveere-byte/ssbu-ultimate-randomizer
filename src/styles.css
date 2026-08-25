@@ -207,8 +207,10 @@
       0 0 22px 6px rgb(250 204 21 / 0.5);
   }
   100% {
-    outline-color: #ca8a04;
-    box-shadow: 0 0 0 1px rgb(202 138 4 / 0.8);
+    outline-color: #facc15;
+    box-shadow:
+      0 0 0 2px rgb(250 204 21 / 0.95),
+      0 0 14px 3px rgb(250 204 21 / 0.45);
   }
 }
 
@@ -231,6 +233,20 @@
   }
   100% {
     transform: translateX(180%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes css-land-radial {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+  55% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.08);
     opacity: 0;
   }
 }
@@ -267,6 +283,34 @@
   pointer-events: none;
 }
 
+.css-flash-tile .css-flash-radial {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 320%;
+  height: 320%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgb(255 251 220 / 0.95) 0%,
+    rgb(253 224 71 / 0.55) 22%,
+    rgb(250 204 21 / 0.22) 48%,
+    transparent 68%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 3;
+  animation: css-land-radial 1.15s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.css-flash-tile .css-flash-radial-delayed {
+  animation-duration: 1.55s;
+  animation-delay: 0.12s;
+  width: 260%;
+  height: 260%;
+  opacity: 0.75;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-reel,
   .animate-result-in,
@@ -280,7 +324,9 @@
 
   .css-flash-tile,
   .css-flash-tile .css-flash-wash,
-  .css-flash-tile .css-flash-shimmer {
+  .css-flash-tile .css-flash-shimmer,
+  .css-flash-tile .css-flash-radial {
     animation: none !important;
   }
 }
+

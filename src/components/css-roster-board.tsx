@@ -32,15 +32,20 @@ export function CssRosterBoard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-[2px] bg-black p-[2px]",
+        "grid gap-[2px] bg-black p-[2px]",
         fill && "h-full min-h-0",
         className,
       )}
+      style={
+        fill
+          ? { gridTemplateRows: `repeat(${rows.length}, minmax(0, 1fr))` }
+          : undefined
+      }
     >
       {rows.map((row, rowIndex) => (
         <ul
           key={rowIndex}
-          className={cn("grid gap-[2px]", fill && "min-h-0 flex-1")}
+          className={cn("grid gap-[2px]", fill && "min-h-0 h-full")}
           style={{ gridTemplateColumns: `repeat(${CSS_COLUMNS}, minmax(0, 1fr))` }}
         >
           {row.length === CSS_COLUMNS
@@ -93,6 +98,7 @@ export function CssRosterBoard({
                       used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                       highlight={highlightId === fighter.id}
                       pulse={pulse && highlightId === fighter.id}
+                      fill={fill}
                       onSelect={onSelect}
                     />
                   </li>

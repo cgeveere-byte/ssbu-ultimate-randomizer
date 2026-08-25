@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Dices, LayoutGrid, Loader2, Lock, Maximize2, Minus, Plus, RotateCcw, Star, Users, X } from "lucide-react";
+import { Ban, Dices, LayoutGrid, Loader2, Lock, Maximize2, Minus, Plus, Star, Undo2, Users, X } from "lucide-react";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
@@ -297,8 +297,8 @@ export function GameMode({
         </div>
 
         {/* Shared control strip in the middle (readable from either side) */}
-        <div className="relative z-10 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1.5 backdrop-blur-sm sm:px-3">
-          <div className="mx-auto flex w-full max-w-lg flex-col gap-1.5">
+        <div className="relative z-10 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
+          <div className="mx-auto w-full max-w-lg">
             {showMatchups ? (
               <MatchupSheet
                 games={stockGames}
@@ -309,111 +309,95 @@ export function GameMode({
                 onClose={() => setShowMatchups(false)}
               />
             ) : (
-              <>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={onExit}
-                    disabled={isSpinning}
-                    className="flex h-10 items-center gap-1 rounded-[var(--radius-md)] border border-border bg-bg px-2 text-xs font-medium text-fg-muted transition-colors hover:border-border-strong hover:text-fg disabled:opacity-40"
-                    aria-label="Exit game mode"
-                  >
-                    <X className="h-3.5 w-3.5" strokeWidth={2} />
-                    Exit
-                  </button>
+              <div className="flex items-center gap-1 overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={onExit}
+                  disabled={isSpinning}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
+                  aria-label="Exit game mode"
+                  title="Exit"
+                >
+                  <X className="h-4 w-4" strokeWidth={2} />
+                </button>
 
-                  <button
-                    type="button"
-                    disabled={isSpinning}
-                    onClick={disableFaceOff}
-                    className="flex h-10 items-center gap-1 rounded-[var(--radius-md)] border border-border bg-bg px-2 text-xs font-medium text-fg-muted"
-                    title="Switch back to standard layout"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
-                    Standard
-                  </button>
+                <button
+                  type="button"
+                  disabled={isSpinning}
+                  onClick={disableFaceOff}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
+                  title="Standard layout"
+                  aria-label="Switch to standard layout"
+                >
+                  <Undo2 className="h-4 w-4" strokeWidth={2} />
+                </button>
 
-                  <div className="flex-1" />
+                <SetScoreButton
+                  games={stockGames}
+                  onClick={() => setShowMatchups(true)}
+                />
 
-                  <SetScoreButton
-                    games={stockGames}
-                    onClick={() => setShowMatchups(true)}
-                  />
+                <UniqueDupesToggle
+                  uniqueOnly={uniqueOnly}
+                  onChange={setUniqueOnly}
+                  disabled={isSpinning}
+                />
+                <QuickRollsToggle
+                  quick={quickRolls}
+                  onChange={setQuickRolls}
+                  disabled={isSpinning}
+                />
+                <RollSfxToggle />
+                {uniqueOnly &&
+                  usedFighterIds.slice(0, 2).some((ids) => ids.length > 0) && (
+                    <button
+                      type="button"
+                      disabled={isSpinning}
+                      onClick={resetUsedFighters}
+                      className="flex h-11 shrink-0 items-center rounded-[var(--radius-md)] border border-border bg-bg px-2 text-xs font-medium text-fg-muted"
+                      title="Allow previously rolled fighters again"
+                    >
+                      Reset
+                    </button>
+                  )}
 
-                  <UniqueDupesToggle
-                    uniqueOnly={uniqueOnly}
-                    onChange={setUniqueOnly}
-                    disabled={isSpinning}
-                  />
-                  <QuickRollsToggle
-                    quick={quickRolls}
-                    onChange={setQuickRolls}
-                    disabled={isSpinning}
-                  />
-                  <RollSfxToggle />
-                  {uniqueOnly &&
-                    usedFighterIds.slice(0, 2).some((ids) => ids.length > 0) && (
-                      <button
-                        type="button"
-                        disabled={isSpinning}
-                        onClick={resetUsedFighters}
-                        className="flex h-10 items-center rounded-[var(--radius-md)] border border-border bg-bg px-2 text-xs font-medium text-fg-muted"
-                        title="Allow previously rolled fighters again"
-                      >
-                        Reset
-                      </button>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={saveStockResult}
-                    disabled={!canSave || isSpinning}
-                    className={cn(
-                      "flex h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] text-sm font-bold",
-                      canSave
-                        ? "bg-accent text-accent-fg"
-                        : "border border-border bg-bg text-fg-muted",
-                    )}
-                  >
-                    {canSave ? `Save ${p1Stocks}–${p2Stocks}` : "Tap stocks left"}
-                  </button>
-
+                <div className="ml-auto flex shrink-0 items-center gap-1">
                   <button
                     type="button"
                     onClick={spin}
                     disabled={isSpinning || !canRoll}
                     className={cn(
-                      "flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-[var(--radius-md)] text-base font-bold tracking-tight transition-[opacity,transform] duration-150 active:scale-[0.99]",
+                      "flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]",
                       "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30",
                       "disabled:pointer-events-none disabled:opacity-45",
                     )}
+                    aria-label={
+                      uniqueExhausted
+                        ? "Reset unique"
+                        : !canRoll
+                          ? "No fighters"
+                          : canSave
+                            ? `Save ${p1Stocks}–${p2Stocks} and roll`
+                            : "Randomize"
+                    }
+                    title={
+                      uniqueExhausted
+                        ? "Reset unique"
+                        : canSave
+                          ? `Save ${p1Stocks}–${p2Stocks} · Roll`
+                          : "Randomize"
+                    }
                   >
                     {isSpinning ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Spinning…
-                      </>
-                    ) : uniqueExhausted ? (
-                      <>
-                        <Ban className="h-5 w-5" />
-                        Reset unique
-                      </>
-                    ) : !canRoll ? (
-                      <>
-                        <Ban className="h-5 w-5" />
-                        No fighters
-                      </>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : uniqueExhausted || !canRoll ? (
+                      <Ban className="h-5 w-5" />
                     ) : (
-                      <>
-                        <Dices className="h-5 w-5" strokeWidth={2} />
-                        {canSave ? `Save ${p1Stocks}–${p2Stocks} · Roll` : "Randomize"}
-                      </>
+                      <Dices className="h-5 w-5" strokeWidth={2} />
                     )}
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -801,36 +785,40 @@ function FaceOffHalf({
             className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white"
             style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
           >
-            {pick ? (isSpinning ? "…" : pick.fighter.name) : emptyHint}
+            {pick ? pick.fighter.name : emptyHint}
           </p>
-          {!isSpinning && (
-            <div className="flex shrink-0 gap-1">
-              {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
-                const selected = stocks === n;
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => onSelectStocks(n)}
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-[6px] text-sm font-bold tabular",
-                      selected
-                        ? "text-bg"
-                        : "border border-white/25 bg-black/40 text-white hover:bg-black/55",
-                    )}
-                    style={
-                      selected
-                        ? { background: pc.hex, color: playerBadgeFg(playerIndex) }
-                        : undefined
-                    }
-                    aria-label={`${n} stocks left`}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div
+            className={cn(
+              "flex shrink-0 gap-1",
+              isSpinning && "invisible",
+            )}
+          >
+            {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
+              const selected = stocks === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => onSelectStocks(n)}
+                  disabled={isSpinning}
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-[6px] text-sm font-bold tabular",
+                    selected
+                      ? "text-bg"
+                      : "border border-white/25 bg-black/40 text-white hover:bg-black/55",
+                  )}
+                  style={
+                    selected
+                      ? { background: pc.hex, color: playerBadgeFg(playerIndex) }
+                      : undefined
+                  }
+                  aria-label={`${n} stocks left`}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     );

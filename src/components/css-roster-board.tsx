@@ -13,10 +13,12 @@ export function CssRosterBoard({
   used,
   highlightId,
   className,
+  onSelect,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
   className?: string;
+  onSelect?: (id: string) => void;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
@@ -36,6 +38,7 @@ export function CssRosterBoard({
                     fighter={fighter}
                     used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                     highlight={highlightId === fighter.id}
+                    onSelect={onSelect}
                   />
                 </li>
               ))
@@ -49,6 +52,7 @@ export function CssRosterBoard({
                       fighter={fighter}
                       used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                       highlight={highlightId === fighter.id}
+                      onSelect={onSelect}
                     />
                   </li>
                 );
@@ -65,22 +69,29 @@ function CssTile({
   fighter,
   used,
   highlight,
+  onSelect,
 }: {
   fighter: Fighter;
   used: boolean;
   highlight: boolean;
+  onSelect?: (id: string) => void;
 }) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
   const title = used ? `${fighter.name} · already used` : fighter.name;
+  const Tag = onSelect ? "button" : "div";
 
   return (
-    <div
+    <Tag
+      type={onSelect ? "button" : undefined}
+      onClick={onSelect ? () => onSelect(fighter.id) : undefined}
       className={cn(
         "relative aspect-square overflow-hidden rounded-[2px] bg-bg-elevated",
         highlight && "z-[1] outline outline-2 outline-offset-[-1px] outline-white",
+        onSelect && "cursor-pointer transition-transform hover:z-[1] hover:brightness-110 active:scale-95",
       )}
       title={title}
+      aria-label={onSelect ? fighter.name : undefined}
     >
       {src ? (
         <img
@@ -112,6 +123,6 @@ function CssTile({
           <span className="absolute h-[78%] w-[2px] -rotate-45 rounded-full bg-white/80" />
         </div>
       )}
-    </div>
+    </Tag>
   );
 }

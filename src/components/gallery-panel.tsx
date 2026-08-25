@@ -1,15 +1,21 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type Fighter, ROSTER, fighterPortraitUrl, fighterTileStyle, initials } from "@/lib/roster";
 import { CssRosterBoard } from "@/components/css-roster-board";
 import { cn } from "@/lib/cn";
 
 type GallerySort = "css" | "name";
 
-function PortraitTile({ fighter }: { fighter: Fighter }) {
+function PortraitTile({ fighter, focused }: { fighter: Fighter; focused?: boolean }) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
   return (
-    <figure className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-bg-elevated">
+    <figure
+      id={`gallery-${fighter.id}`}
+      className={cn(
+        "overflow-hidden rounded-[var(--radius-lg)] border bg-bg-elevated scroll-mt-24",
+        focused ? "border-accent ring-2 ring-accent/50" : "border-border",
+      )}
+    >
       <div className="relative aspect-square">
         {src ? (
           <img
@@ -39,10 +45,17 @@ function PortraitTile({ fighter }: { fighter: Fighter }) {
 
 export function GalleryPanel() {
   const [sort, setSort] = useState<GallerySort>("css");
+  const [focusId, setFocusId] = useState<string | null>(null);
 
   const azFighters = useMemo(() => {
     return ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name, "en"));
   }, []);
+
+  useEffect(() => {
+    if (sort !== "name" || !focusId) return;
+    const el = document.getElementById(`gallery-${focusId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [sort, focusId]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -94,12 +107,18 @@ export function GalleryPanel() {
       </div>
 
       {sort === "css" ? (
-        <CssRosterBoard className="overflow-hidden rounded-[var(--radius-lg)]" />
+        <CssRosterBoard
+          className="overflow-hidden rounded-[var(--radius-lg)]"
+          onSelect={(id) => {
+            setFocusId(id);
+            setSort("name");
+          }}
+        />
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {azFighters.map((fighter) => (
             <li key={fighter.id}>
-              <PortraitTile fighter={fighter} />
+              <PortraitTile fighter={fighter} focused={focusId === fighter.id} />
             </li>
           ))}
         </ul>

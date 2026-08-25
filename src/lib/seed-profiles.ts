@@ -5,6 +5,13 @@ export const CHRIS_PROFILE_NAME = "Chris";
 export const WRISTAKER_PROFILE_ID = "wristaker";
 export const WRISTAKER_PROFILE_NAME = "Wristaker";
 
+/** P1 → Chris, P2 → Wristaker when a slot has no assignment. */
+export function defaultPlayerProfileId(playerIndex: number): string | null {
+  if (playerIndex === 0) return CHRIS_PROFILE_ID;
+  if (playerIndex === 1) return WRISTAKER_PROFILE_ID;
+  return null;
+}
+
 export const CHRIS_WEIGHTS: Record<string, number> = {
   mario: 0,
   "donkey-kong": 1,

@@ -30,6 +30,7 @@ import {
   profileEligibleCount,
   smash64Weights,
   uniqueProfileName,
+  defaultPlayerProfileId,
 } from "./profiles";
 import {
   type StockGame,
@@ -54,7 +55,7 @@ export type { StockGame };
 export { DEFAULT_PROFILE_ID, isBuiltInProfileId, isDefaultProfileId, makeDefaultProfile, makeSmash64Profile };
 
 function emptyPlayerProfiles(): (string | null)[] {
-  return Array.from({ length: 8 }, () => null);
+  return Array.from({ length: 8 }, (_, i) => defaultPlayerProfileId(i));
 }
 
 function emptyUsedFighters(): string[][] {
@@ -232,7 +233,11 @@ export const useRandomizerStore = create<RandomizerState>()(
       getPlayerProfileId: (playerIndex) => {
         const s = get();
         if (!s.perPlayerProfiles) return s.activeProfileId;
-        return s.playerProfileIds[playerIndex] ?? s.activeProfileId;
+        return (
+          s.playerProfileIds[playerIndex] ??
+          defaultPlayerProfileId(playerIndex) ??
+          s.activeProfileId
+        );
       },
 
       canRoll: () => {
@@ -665,6 +670,13 @@ export const useRandomizerStore = create<RandomizerState>()(
                   : [],
               )
             : current.usedFighterIds,
+          playerProfileIds: Array.from({ length: 8 }, (_, i) => {
+            const existing = Array.isArray(p.playerProfileIds)
+              ? p.playerProfileIds[i]
+              : undefined;
+            if (typeof existing === "string" && existing.length > 0) return existing;
+            return defaultPlayerProfileId(i);
+          }),
         };
       },
       partialize: (s) => ({

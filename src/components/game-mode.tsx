@@ -75,13 +75,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
     [profiles, active],
   );
 
-  const getPlayerProfileId = useCallback(
-    (playerIndex: number) => {
-      if (!perPlayerProfiles) return activeProfileId;
-      return playerProfileIds[playerIndex] ?? activeProfileId;
-    },
-    [perPlayerProfiles, playerProfileIds, activeProfileId],
-  );
+  const getPlayerProfileId = useRandomizerStore((s) => s.getPlayerProfileId);
 
   const canRoll = useRandomizerStore((s) => s.canRoll());
 
@@ -674,14 +668,9 @@ function FaceOffHalf({
 }) {
   const pc = playerColor(playerIndex);
   const profiles = useRandomizerStore((s) => s.profiles);
-  const activeProfileId = useRandomizerStore((s) => s.activeProfileId);
-  const playerProfileIds = useRandomizerStore((s) => s.playerProfileIds);
-  const perPlayer = useRandomizerStore((s) => s.perPlayerProfiles);
   const nudge = useRandomizerStore((s) => s.nudgePlayerFighterWeight);
 
-  const liveProfileId = !perPlayer
-    ? activeProfileId
-    : (playerProfileIds[playerIndex] ?? activeProfileId);
+  const liveProfileId = useRandomizerStore((s) => s.getPlayerProfileId(playerIndex));
   const liveProfile =
     profiles.find((p) => p.id === liveProfileId) ?? profiles[0];
 

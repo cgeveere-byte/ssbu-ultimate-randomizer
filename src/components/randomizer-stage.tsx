@@ -66,13 +66,7 @@ export function RandomizerStage({
     [profiles, active],
   );
 
-  const getPlayerProfileId = useCallback(
-    (playerIndex: number) => {
-      if (!perPlayerProfiles) return activeProfileId;
-      return playerProfileIds[playerIndex] ?? activeProfileId;
-    },
-    [perPlayerProfiles, playerProfileIds, activeProfileId],
-  );
+  const getPlayerProfileId = useRandomizerStore((s) => s.getPlayerProfileId);
 
   const canRoll = useRandomizerStore((s) => s.canRoll());
   const uniqueExhausted =

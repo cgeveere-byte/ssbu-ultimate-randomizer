@@ -12,6 +12,15 @@ import {
   WRISTAKER_PROFILE_ID,
   WRISTAKER_PROFILE_NAME,
   WRISTAKER_WEIGHTS,
+  defaultPlayerProfileId,
+} from "./seed-profiles";
+
+export {
+  CHRIS_PROFILE_ID,
+  CHRIS_PROFILE_NAME,
+  WRISTAKER_PROFILE_ID,
+  WRISTAKER_PROFILE_NAME,
+  defaultPlayerProfileId,
 } from "./seed-profiles";
 
 /** Numeric multipliers per fighter id (0 = never). */

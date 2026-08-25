@@ -27,6 +27,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const lastPicks = useRandomizerStore((s) => s.lastPicks);
   const setLastPicks = useRandomizerStore((s) => s.setLastPicks);
   const pushHistory = useRandomizerStore((s) => s.pushHistory);
+  const commitUsedPicks = useRandomizerStore((s) => s.commitUsedPicks);
   const roll = useRandomizerStore((s) => s.roll);
   const profiles = useRandomizerStore((s) => s.profiles);
   const activeProfileId = useRandomizerStore((s) => s.activeProfileId);
@@ -102,12 +103,12 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
         const id = window.setTimeout(() => { requestAnimationFrame(tick); }, 16);
         timers.current.push(id);
       } else {
-        setDisplayPicks(final); setLastPicks(final); pushHistory(final); setRevealed(true); setSpinning(false); playRollLock();
+        setDisplayPicks(final); setLastPicks(final); pushHistory(final); commitUsedPicks(final); setRevealed(true); setSpinning(false); playRollLock();
       }
     };
     setDisplayPicks(Array.from({ length: final.length }, (_, i) => ({ fighter: pool[Math.floor(Math.random() * pool.length)]!, profileId: final[i].profileId, profileName: final[i].profileName })));
     requestAnimationFrame(tick);
-  }, [canRoll, flashPool, isSpinning, pushHistory, quickRolls, roll, saveStockResult, setLastPicks, setSpinning]);
+  }, [canRoll, flashPool, isSpinning, pushHistory, commitUsedPicks, quickRolls, roll, saveStockResult, setLastPicks, setSpinning]);
 
   const shown = displayPicks.length > 0 ? displayPicks : lastPicks;
   const cols = Math.min(shown.length || playerCount, 4);

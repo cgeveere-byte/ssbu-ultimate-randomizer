@@ -330,7 +330,7 @@
 }
 
 .css-flash-tile {
-  z-index: 5;
+  z-index: 50;
   overflow: visible;
   outline: 2px solid #facc15;
   outline-offset: 0;

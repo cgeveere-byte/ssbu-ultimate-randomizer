@@ -39,6 +39,7 @@ export function RandomizerStage({
   const lastPicks = useRandomizerStore((s) => s.lastPicks);
   const setLastPicks = useRandomizerStore((s) => s.setLastPicks);
   const pushHistory = useRandomizerStore((s) => s.pushHistory);
+  const commitUsedPicks = useRandomizerStore((s) => s.commitUsedPicks);
   const roll = useRandomizerStore((s) => s.roll);
   const profiles = useRandomizerStore((s) => s.profiles);
   const activeProfileId = useRandomizerStore((s) => s.activeProfileId);
@@ -163,6 +164,7 @@ export function RandomizerStage({
         setDisplayPicks(final);
         setLastPicks(final);
         pushHistory(final);
+        commitUsedPicks(final);
         setRevealed(true);
         setSpinning(false);
         playRollLock();
@@ -182,6 +184,7 @@ export function RandomizerStage({
     flashPool,
     isSpinning,
     pushHistory,
+    commitUsedPicks,
     quickRolls,
     roll,
     setLastPicks,

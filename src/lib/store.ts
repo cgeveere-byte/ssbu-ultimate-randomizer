@@ -142,6 +142,7 @@ interface RandomizerState {
   setSpinning: (v: boolean) => void;
   setLastPicks: (picks: PlayerPick[]) => void;
   pushHistory: (picks: PlayerPick[]) => void;
+  commitUsedPicks: (picks: PlayerPick[]) => void;
   clearHistory: () => void;
   resetSession: () => void;
 
@@ -482,6 +483,22 @@ export const useRandomizerStore = create<RandomizerState>()(
           ].slice(0, 24),
         })),
 
+      commitUsedPicks: (picks) => {
+        if (!get().uniqueOnly || picks.length === 0) return;
+        set((s) => {
+          const nextUsed = emptyUsedFighters();
+          for (let i = 0; i < 8; i++) {
+            nextUsed[i] = (s.usedFighterIds[i] ?? []).slice();
+          }
+          picks.forEach((p, i) => {
+            if (!nextUsed[i].includes(p.fighter.id)) {
+              nextUsed[i] = [...nextUsed[i], p.fighter.id];
+            }
+          });
+          return { usedFighterIds: nextUsed };
+        });
+      },
+
       clearHistory: () => get().resetSession(),
 
       resetSession: () =>
@@ -508,16 +525,13 @@ export const useRandomizerStore = create<RandomizerState>()(
           }
           const fighter = pickWeighted(pool);
           if (!fighter) continue;
-          if (s.uniqueOnly) {
-            nextUsed[i] = [...nextUsed[i], fighter.id];
-          }
+          if (s.uniqueOnly) nextUsed[i] = [...nextUsed[i], fighter.id];
           results.push({
             fighter,
             profileId: profile.id,
             profileName: profile.name,
           });
         }
-        if (s.uniqueOnly) set({ usedFighterIds: nextUsed });
         return results;
       },
 

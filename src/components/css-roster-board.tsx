@@ -56,7 +56,7 @@ export function CssRosterBoard({
   return (
     <div
       className={cn(
-        "grid gap-[2px] bg-black p-[2px]",
+        "grid gap-[2px] bg-black p-[2px] isolate overflow-visible",
         fill && "h-full min-h-0",
         className,
       )}
@@ -67,17 +67,16 @@ export function CssRosterBoard({
       }
     >
       {rows.map((row, rowIndex) => {
-        const rowHasPick = Boolean(
-          (pulse && highlightId && row.some((f) => f.id === highlightId)) ||
-            row.some((f) => liveIds.has(f.id)),
+        const rowHasPulse = Boolean(
+          pulse && highlightId && row.some((f) => f.id === highlightId),
         );
         return (
         <ul
           key={rowIndex}
           className={cn(
-            "grid gap-[2px] overflow-visible",
+            "relative grid gap-[2px] overflow-visible",
             fill && "min-h-0 h-full",
-            rowHasPick && "relative z-20",
+            rowHasPulse ? "z-50" : "z-0",
           )}
           style={{ gridTemplateColumns: `repeat(${CSS_COLUMNS}, minmax(0, 1fr))` }}
         >
@@ -88,7 +87,7 @@ export function CssRosterBoard({
                   id={`css-tile-${fighter.id}`}
                   className={cn(
                     fill && "min-h-0 h-full",
-                    liveIds.has(fighter.id) && "relative z-30 overflow-visible",
+                    pulse && highlightId === fighter.id && "relative z-50 overflow-visible",
                   )}
                 >
                   <CssTile
@@ -126,7 +125,7 @@ export function CssRosterBoard({
                   id={`css-tile-${fighter.id}`}
                   className={cn(
                     fill && "min-h-0 h-full",
-                    liveIds.has(fighter.id) && "relative z-30 overflow-visible",
+                    pulse && highlightId === fighter.id && "relative z-50 overflow-visible",
                   )}
                 >
                     <CssTile

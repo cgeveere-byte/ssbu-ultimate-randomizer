@@ -140,6 +140,117 @@ export const ROSTER: Fighter[] = [
   { id: "sora", name: "Sora", series: "kingdom-hearts", seriesLabel: "Kingdom Hearts", number: 81, dlc: true },
 ];
 
+/**
+ * Official Ultimate character-select order: 13 per row.
+ * Miis sit on the last row with the late DLC (not after Greninja).
+ */
+export const CSS_COLUMNS = 13;
+
+export const CSS_ROSTER_IDS = [
+  "mario",
+  "donkey-kong",
+  "link",
+  "samus",
+  "dark-samus",
+  "yoshi",
+  "kirby",
+  "fox",
+  "pikachu",
+  "luigi",
+  "ness",
+  "captain-falcon",
+  "jigglypuff",
+  "peach",
+  "daisy",
+  "bowser",
+  "ice-climbers",
+  "sheik",
+  "zelda",
+  "dr-mario",
+  "pichu",
+  "falco",
+  "marth",
+  "lucina",
+  "young-link",
+  "ganondorf",
+  "mewtwo",
+  "roy",
+  "chrom",
+  "mr-game-watch",
+  "meta-knight",
+  "pit",
+  "dark-pit",
+  "zero-suit-samus",
+  "wario",
+  "snake",
+  "ike",
+  "pokemon-trainer",
+  "diddy-kong",
+  "lucas",
+  "sonic",
+  "king-dedede",
+  "olimar",
+  "lucario",
+  "rob",
+  "toon-link",
+  "wolf",
+  "villager",
+  "mega-man",
+  "wii-fit-trainer",
+  "rosalina",
+  "little-mac",
+  "greninja",
+  "palutena",
+  "pac-man",
+  "robin",
+  "shulk",
+  "bowser-jr",
+  "duck-hunt",
+  "ryu",
+  "ken",
+  "cloud",
+  "corrin",
+  "bayonetta",
+  "inkling",
+  "ridley",
+  "simon",
+  "richter",
+  "king-k-rool",
+  "isabelle",
+  "incineroar",
+  "piranha-plant",
+  "joker",
+  "hero",
+  "banjo-kazooie",
+  "terry",
+  "byleth",
+  "min-min",
+  "steve",
+  "sephiroth",
+  "pyra-mythra",
+  "kazuya",
+  "sora",
+  "mii-brawler",
+  "mii-swordfighter",
+  "mii-gunner",
+] as const;
+
+const ROSTER_BY_ID = new Map(ROSTER.map((f) => [f.id, f]));
+
+export const CSS_ROSTER: Fighter[] = CSS_ROSTER_IDS.map((id) => {
+  const f = ROSTER_BY_ID.get(id);
+  if (!f) throw new Error(`CSS roster missing fighter: ${id}`);
+  return f;
+});
+
+export function cssRosterRows(): Fighter[][] {
+  const rows: Fighter[][] = [];
+  for (let i = 0; i < CSS_ROSTER.length; i += CSS_COLUMNS) {
+    rows.push(CSS_ROSTER.slice(i, i + CSS_COLUMNS));
+  }
+  return rows;
+}
+
 export const SERIES_LIST = Array.from(
   new Map(ROSTER.map((f) => [f.series, f.seriesLabel])).entries(),
 )

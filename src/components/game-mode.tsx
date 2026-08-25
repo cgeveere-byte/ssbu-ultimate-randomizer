@@ -788,23 +788,49 @@ function FaceOffHalf({
         style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}
       >
         <div className="relative z-10 shrink-0">{topBar}</div>
-        <CssRosterBoard
-          used={usedSet}
-          highlightId={pick?.fighter.id ?? null}
-          className="min-h-0 w-full flex-1"
-        />
-        <div className="z-10 flex shrink-0 flex-col items-center gap-1.5 px-3 pb-2.5 pt-1">
-          {pick ? (
-            <p
-              className="line-clamp-1 text-center text-lg font-bold tracking-tight text-white"
-              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
-            >
-              {isSpinning ? "…" : pick.fighter.name}
-            </p>
-          ) : (
-            <p className="text-center text-xs text-white/50">{emptyHint}</p>
+        <div className="min-h-0 flex-1 px-[2px]">
+          <CssRosterBoard
+            used={usedSet}
+            highlightId={pick?.fighter.id ?? null}
+            fill
+            className="h-full"
+          />
+        </div>
+        <div className="z-10 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
+          <p
+            className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white"
+            style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
+          >
+            {pick ? (isSpinning ? "…" : pick.fighter.name) : emptyHint}
+          </p>
+          {!isSpinning && (
+            <div className="flex shrink-0 gap-1">
+              {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
+                const selected = stocks === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => onSelectStocks(n)}
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-[6px] text-sm font-bold tabular",
+                      selected
+                        ? "text-bg"
+                        : "border border-white/25 bg-black/40 text-white hover:bg-black/55",
+                    )}
+                    style={
+                      selected
+                        ? { background: pc.hex, color: playerBadgeFg(playerIndex) }
+                        : undefined
+                    }
+                    aria-label={`${n} stocks left`}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
           )}
-          {stocksRow}
         </div>
       </div>
     );

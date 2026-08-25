@@ -16,6 +16,7 @@ export function CssRosterBoard({
   pulseKey,
   className,
   onSelect,
+  fill = false,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
@@ -23,21 +24,32 @@ export function CssRosterBoard({
   pulseKey?: number | string;
   className?: string;
   onSelect?: (id: string) => void;
+  fill?: boolean;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
 
   return (
-    <div className={cn("flex flex-col gap-[2px] bg-black p-[2px]", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-[2px] bg-black p-[2px]",
+        fill && "h-full min-h-0",
+        className,
+      )}
+    >
       {rows.map((row, rowIndex) => (
         <ul
           key={rowIndex}
-          className="grid gap-[2px]"
+          className={cn("grid gap-[2px]", fill && "min-h-0 flex-1")}
           style={{ gridTemplateColumns: `repeat(${CSS_COLUMNS}, minmax(0, 1fr))` }}
         >
           {row.length === CSS_COLUMNS
             ? row.map((fighter) => (
-                <li key={fighter.id} id={`css-tile-${fighter.id}`}>
+                <li
+                  key={fighter.id}
+                  id={`css-tile-${fighter.id}`}
+                  className={fill ? "min-h-0 h-full" : undefined}
+                >
                   <CssTile
                     key={
                       pulse && highlightId === fighter.id
@@ -48,6 +60,7 @@ export function CssRosterBoard({
                     used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                     highlight={highlightId === fighter.id}
                     pulse={pulse && highlightId === fighter.id}
+                    fill={fill}
                     onSelect={onSelect}
                   />
                 </li>
@@ -55,9 +68,21 @@ export function CssRosterBoard({
             : Array.from({ length: CSS_COLUMNS }, (_, col) => {
                 const offset = Math.floor((CSS_COLUMNS - row.length) / 2);
                 const fighter = row[col - offset];
-                if (!fighter) return <li key={`pad-${col}`} aria-hidden />;
+                if (!fighter) {
+                  return (
+                    <li
+                      key={`pad-${col}`}
+                      aria-hidden
+                      className={fill ? "min-h-0 h-full" : undefined}
+                    />
+                  );
+                }
                 return (
-                  <li key={fighter.id} id={`css-tile-${fighter.id}`}>
+                  <li
+                  key={fighter.id}
+                  id={`css-tile-${fighter.id}`}
+                  className={fill ? "min-h-0 h-full" : undefined}
+                >
                     <CssTile
                       key={
                         pulse && highlightId === fighter.id
@@ -86,12 +111,14 @@ function CssTile({
   used,
   highlight,
   pulse,
+  fill,
   onSelect,
 }: {
   fighter: Fighter;
   used: boolean;
   highlight: boolean;
   pulse?: boolean;
+  fill?: boolean;
   onSelect?: (id: string) => void;
 }) {
   const src = fighterPortraitUrl(fighter.id);
@@ -104,7 +131,8 @@ function CssTile({
       type={onSelect ? "button" : undefined}
       onClick={onSelect ? () => onSelect(fighter.id) : undefined}
       className={cn(
-        "relative aspect-square overflow-hidden rounded-[2px] bg-bg-elevated",
+        "relative overflow-hidden rounded-[2px] bg-bg-elevated",
+        fill ? "h-full w-full" : "aspect-square",
         highlight && !pulse && "z-[1] outline outline-2 outline-offset-[-1px] outline-white",
         pulse && "css-flash-tile",
         onSelect && "cursor-pointer transition-transform hover:z-[1] hover:brightness-110 active:scale-95",

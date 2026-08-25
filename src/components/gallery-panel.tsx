@@ -60,6 +60,7 @@ function PortraitTile({
 export function GalleryPanel() {
   const [sort, setSort] = useState<GallerySort>("css");
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [pulseKey, setPulseKey] = useState(0);
 
   const azFighters = useMemo(() => {
     return ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name, "en"));
@@ -125,6 +126,8 @@ export function GalleryPanel() {
         <CssRosterBoard
           className="overflow-hidden rounded-[var(--radius-lg)]"
           highlightId={focusId}
+          pulse
+          pulseKey={pulseKey}
           onSelect={(id) => {
             setFocusId(id);
             setSort("name");
@@ -139,6 +142,7 @@ export function GalleryPanel() {
                 focused={focusId === fighter.id}
                 onSelect={() => {
                   setFocusId(fighter.id);
+                  setPulseKey((k) => k + 1);
                   setSort("css");
                 }}
               />

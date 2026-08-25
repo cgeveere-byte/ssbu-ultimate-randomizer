@@ -12,11 +12,15 @@ import { useMemo } from "react";
 export function CssRosterBoard({
   used,
   highlightId,
+  pulse = false,
+  pulseKey,
   className,
   onSelect,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
+  pulse?: boolean;
+  pulseKey?: number | string;
   className?: string;
   onSelect?: (id: string) => void;
 }) {
@@ -35,9 +39,15 @@ export function CssRosterBoard({
             ? row.map((fighter) => (
                 <li key={fighter.id} id={`css-tile-${fighter.id}`}>
                   <CssTile
+                    key={
+                      pulse && highlightId === fighter.id
+                        ? `pulse-${fighter.id}-${pulseKey}`
+                        : fighter.id
+                    }
                     fighter={fighter}
                     used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                     highlight={highlightId === fighter.id}
+                    pulse={pulse && highlightId === fighter.id}
                     onSelect={onSelect}
                   />
                 </li>
@@ -49,9 +59,15 @@ export function CssRosterBoard({
                 return (
                   <li key={fighter.id} id={`css-tile-${fighter.id}`}>
                     <CssTile
+                      key={
+                        pulse && highlightId === fighter.id
+                          ? `pulse-${fighter.id}-${pulseKey}`
+                          : fighter.id
+                      }
                       fighter={fighter}
                       used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                       highlight={highlightId === fighter.id}
+                      pulse={pulse && highlightId === fighter.id}
                       onSelect={onSelect}
                     />
                   </li>
@@ -69,11 +85,13 @@ function CssTile({
   fighter,
   used,
   highlight,
+  pulse,
   onSelect,
 }: {
   fighter: Fighter;
   used: boolean;
   highlight: boolean;
+  pulse?: boolean;
   onSelect?: (id: string) => void;
 }) {
   const src = fighterPortraitUrl(fighter.id);
@@ -87,7 +105,8 @@ function CssTile({
       onClick={onSelect ? () => onSelect(fighter.id) : undefined}
       className={cn(
         "relative aspect-square overflow-hidden rounded-[2px] bg-bg-elevated",
-        highlight && "z-[1] outline outline-2 outline-offset-[-1px] outline-white",
+        highlight && !pulse && "z-[1] outline outline-2 outline-offset-[-1px] outline-white",
+        pulse && "css-flash-tile",
         onSelect && "cursor-pointer transition-transform hover:z-[1] hover:brightness-110 active:scale-95",
       )}
       title={title}
@@ -101,7 +120,7 @@ function CssTile({
           className={cn(
             "h-full w-full object-cover object-center",
             used && "grayscale opacity-40",
-            highlight && "brightness-110",
+            (highlight || pulse) && "brightness-110",
           )}
         />
       ) : (
@@ -115,6 +134,13 @@ function CssTile({
         >
           {initials(fighter.name)}
         </div>
+      )}
+
+      {pulse && (
+        <>
+          <span className="css-flash-wash" />
+          <span className="css-flash-shimmer" />
+        </>
       )}
 
       {used && (

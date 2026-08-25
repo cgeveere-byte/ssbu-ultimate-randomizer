@@ -481,7 +481,7 @@ export const useRandomizerStore = create<RandomizerState>()(
           ].slice(0, 24),
         })),
 
-      clearHistory: () => set({ history: [] }),
+      clearHistory: () => set({ history: [], usedFighterIds: emptyUsedFighters() }),
 
       roll: () => {
         const s = get();

@@ -126,6 +126,11 @@ export function RosterPanel() {
               the original 12 Super Smash Bros. (N64) fighters. Read-only — duplicate to
               customize.
             </>
+          ) : isBuiltInProfileId(active.id) ? (
+            <>
+              <span className="font-medium text-fg">{active.name}</span> is a starter profile.
+              Read-only — duplicate it to customize.
+            </>
           ) : (
             <>
               Presets: Never ×0 · Rare ×0.25 · Normal ×1 · Often ×2 · Favorite ×5. Type any custom

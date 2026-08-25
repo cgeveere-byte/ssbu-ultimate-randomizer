@@ -240,7 +240,7 @@ export function ProfilesPanel() {
           <p className="text-xs font-medium text-fg">Reset all data</p>
           <p className="mt-0.5 text-xs text-fg-muted">
             Clears custom profiles, history, stock scores, unique bags, and settings.
-            Built-in Default and Smash 64 stay.
+            Built-in profiles stay.
           </p>
         </div>
         <Button
@@ -249,7 +249,7 @@ export function ProfilesPanel() {
           disabled={isSpinning}
           onClick={() => {
             const first = window.confirm(
-              "Reset all app data?\n\nThis removes custom profiles, roll history, stock scores, unique bags, and settings. Built-in Default and Smash 64 stay.\n\nThis cannot be undone.",
+              "Reset all app data?\n\nThis removes custom profiles, roll history, stock scores, unique bags, and settings. Built-in profiles stay.\n\nThis cannot be undone.",
             );
             if (!first) return;
             const second = window.confirm(

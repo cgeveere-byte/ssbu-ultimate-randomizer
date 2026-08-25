@@ -5,6 +5,14 @@ import {
   remapLegacyWeightMap,
   resolveWeightLevel,
 } from "./roster";
+import {
+  CHRIS_PROFILE_ID,
+  CHRIS_PROFILE_NAME,
+  CHRIS_WEIGHTS,
+  WRISTAKER_PROFILE_ID,
+  WRISTAKER_PROFILE_NAME,
+  WRISTAKER_WEIGHTS,
+} from "./seed-profiles";
 
 /** Numeric multipliers per fighter id (0 = never). */
 export type WeightMap = Record<string, number>;
@@ -45,7 +53,12 @@ export const SMASH_64_FIGHTER_IDS = [
 
 const SMASH_64_SET = new Set<string>(SMASH_64_FIGHTER_IDS);
 
-export const BUILTIN_PROFILE_IDS = [DEFAULT_PROFILE_ID, SMASH_64_PROFILE_ID] as const;
+export const BUILTIN_PROFILE_IDS = [
+  DEFAULT_PROFILE_ID,
+  SMASH_64_PROFILE_ID,
+  CHRIS_PROFILE_ID,
+  WRISTAKER_PROFILE_ID,
+] as const;
 
 export type BuiltInProfileId = (typeof BUILTIN_PROFILE_IDS)[number];
 
@@ -70,10 +83,7 @@ export function isSmash64ProfileId(id: string | null | undefined): boolean {
 
 /** Any locked built-in profile (Default, Smash 64, …). */
 export function isBuiltInProfileId(id: string | null | undefined): boolean {
-  return (
-    id === DEFAULT_PROFILE_ID ||
-    id === SMASH_64_PROFILE_ID
-  );
+  return !!id && (BUILTIN_PROFILE_IDS as readonly string[]).includes(id);
 }
 
 export function isBuiltInProfile(
@@ -121,21 +131,51 @@ export function makeSmash64Profile(): WeightProfile {
   };
 }
 
+export function makeChrisProfile(): WeightProfile {
+  return {
+    id: CHRIS_PROFILE_ID,
+    name: CHRIS_PROFILE_NAME,
+    weights: normalizeWeights(CHRIS_WEIGHTS),
+    updatedAt: 0,
+  };
+}
+
+export function makeWristakerProfile(): WeightProfile {
+  return {
+    id: WRISTAKER_PROFILE_ID,
+    name: WRISTAKER_PROFILE_NAME,
+    weights: normalizeWeights(WRISTAKER_WEIGHTS),
+    updatedAt: 0,
+  };
+}
+
 export function makeBuiltInProfile(id: string): WeightProfile | null {
   if (id === DEFAULT_PROFILE_ID) return makeDefaultProfile();
   if (id === SMASH_64_PROFILE_ID) return makeSmash64Profile();
+  if (id === CHRIS_PROFILE_ID) return makeChrisProfile();
+  if (id === WRISTAKER_PROFILE_ID) return makeWristakerProfile();
   return null;
 }
 
 /** Canonical built-ins in display order. */
 export function listBuiltInProfiles(): WeightProfile[] {
-  return [makeDefaultProfile(), makeSmash64Profile()];
+  return [
+    makeDefaultProfile(),
+    makeSmash64Profile(),
+    makeChrisProfile(),
+    makeWristakerProfile(),
+  ];
 }
 
 export function builtInSubtitle(id: string): string {
   if (id === DEFAULT_PROFILE_ID) return `Equal odds · ${ROSTER.length}/${ROSTER.length}`;
   if (id === SMASH_64_PROFILE_ID) {
     return `N64 cast · ${SMASH_64_FIGHTER_IDS.length}/${ROSTER.length}`;
+  }
+  if (id === CHRIS_PROFILE_ID || id === WRISTAKER_PROFILE_ID) {
+    const p = makeBuiltInProfile(id);
+    const n = p ? profileEligibleCount(p.weights) : 0;
+    return `Starter · ${n}/${ROSTER.length}`;
   }
   return "";
 }

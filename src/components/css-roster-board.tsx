@@ -17,6 +17,7 @@ export function CssRosterBoard({
   className,
   onSelect,
   fill = false,
+  dimOthers = false,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
@@ -25,6 +26,7 @@ export function CssRosterBoard({
   className?: string;
   onSelect?: (id: string) => void;
   fill?: boolean;
+  dimOthers?: boolean;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
@@ -65,6 +67,7 @@ export function CssRosterBoard({
                     used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                     highlight={highlightId === fighter.id}
                     pulse={pulse && highlightId === fighter.id}
+                    dimmed={dimOthers && fighter.id !== highlightId}
                     fill={fill}
                     onSelect={onSelect}
                   />
@@ -98,6 +101,7 @@ export function CssRosterBoard({
                       used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                       highlight={highlightId === fighter.id}
                       pulse={pulse && highlightId === fighter.id}
+                      dimmed={dimOthers && fighter.id !== highlightId}
                       fill={fill}
                       onSelect={onSelect}
                     />
@@ -117,6 +121,7 @@ function CssTile({
   used,
   highlight,
   pulse,
+  dimmed,
   fill,
   onSelect,
 }: {
@@ -124,6 +129,7 @@ function CssTile({
   used: boolean;
   highlight: boolean;
   pulse?: boolean;
+  dimmed?: boolean;
   fill?: boolean;
   onSelect?: (id: string) => void;
 }) {
@@ -152,8 +158,9 @@ function CssTile({
           alt={fighter.name}
           draggable={false}
           className={cn(
-            "h-full w-full object-cover object-center",
+            "h-full w-full object-cover object-center transition-[filter,opacity] duration-300",
             used && "grayscale opacity-40",
+            !used && dimmed && "saturate-[.4] brightness-[.82] contrast-[.95]",
             (highlight || pulse) && "brightness-110",
           )}
         />
@@ -162,6 +169,7 @@ function CssTile({
           className={cn(
             "flex h-full w-full items-center justify-center text-[7px] font-semibold text-fg sm:text-[9px]",
             used && "grayscale opacity-40",
+            !used && dimmed && "saturate-[.4] brightness-[.82]",
           )}
           style={tile}
           aria-hidden

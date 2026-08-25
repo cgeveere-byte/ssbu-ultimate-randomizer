@@ -144,6 +144,7 @@ export function FaceOffHalf({
             highlightId={pick?.fighter.id ?? null}
             pulse={Boolean(pick) && revealed && !isSpinning}
             pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
+            dimOthers={Boolean(pick) && revealed && !isSpinning}
             fill
             className="h-full"
           />

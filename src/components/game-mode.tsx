@@ -300,20 +300,22 @@ export function GameMode({
 
         {/* Shared control strip in the middle (readable from either side) */}
         <div className="relative z-10 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
-          <div className="relative mx-auto w-full max-w-lg">
+          <div className="relative w-full">
             {showMatchups ? (
-              <MatchupSheet
-                games={stockGames}
-                onReset={() => {
-                  clearStockSession();
-                  setShowMatchups(false);
-                }}
-                onClose={() => setShowMatchups(false)}
-              />
+              <div className="mx-auto w-full max-w-lg">
+                <MatchupSheet
+                  games={stockGames}
+                  onReset={() => {
+                    clearStockSession();
+                    setShowMatchups(false);
+                  }}
+                  onClose={() => setShowMatchups(false)}
+                />
+              </div>
             ) : (
               <>
-                <div className="grid grid-cols-3 items-center gap-1">
-                  <div className="flex min-w-0 items-center justify-start gap-1 overflow-x-auto">
+                <div className="relative flex h-12 items-center">
+                  <div className="relative z-10 flex min-w-0 items-center gap-1">
                     <button
                       type="button"
                       onClick={onExit}
@@ -343,13 +345,13 @@ export function GameMode({
                     />
                   </div>
 
-                  <div className="flex justify-center">
+                  <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
                     <button
                       type="button"
                       onClick={spin}
                       disabled={isSpinning || !canRoll}
                       className={cn(
-                        "flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]",
+                        "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]",
                         "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30",
                         "disabled:pointer-events-none disabled:opacity-45",
                       )}
@@ -380,7 +382,7 @@ export function GameMode({
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-end">
+                  <div className="relative z-10 ml-auto">
                     <button
                       type="button"
                       onClick={() => setShowSettings((v) => !v)}
@@ -818,15 +820,17 @@ function FaceOffHalf({
   );
 
   const topBar = (
-    <div className="flex items-start justify-between gap-2 px-3 pt-2.5">
+    <div className="relative flex h-9 items-center px-3">
       <span
-        className="inline-flex h-7 items-center rounded-full px-3 text-sm font-bold uppercase tracking-wider shadow-sm"
+        className="relative z-10 inline-flex h-7 items-center rounded-full px-3 text-sm font-bold uppercase tracking-wider shadow-sm"
         style={{ background: pc.hex, color: playerBadgeFg(playerIndex) }}
       >
         P{playerIndex + 1}
       </span>
-      {viewToggle}
-      <span className="tabular text-sm font-bold text-white drop-shadow-md">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="pointer-events-auto">{viewToggle}</div>
+      </div>
+      <span className="relative z-10 ml-auto tabular text-sm font-bold text-white drop-shadow-md">
         {wins}–{losses}
       </span>
     </div>

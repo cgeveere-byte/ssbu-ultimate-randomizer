@@ -33,7 +33,7 @@ export function CssRosterBoard({
         >
           {row.length === CSS_COLUMNS
             ? row.map((fighter) => (
-                <li key={fighter.id}>
+                <li key={fighter.id} id={`css-tile-${fighter.id}`}>
                   <CssTile
                     fighter={fighter}
                     used={usedSet.has(fighter.id) && fighter.id !== highlightId}
@@ -47,7 +47,7 @@ export function CssRosterBoard({
                 const fighter = row[col - offset];
                 if (!fighter) return <li key={`pad-${col}`} aria-hidden />;
                 return (
-                  <li key={fighter.id}>
+                  <li key={fighter.id} id={`css-tile-${fighter.id}`}>
                     <CssTile
                       fighter={fighter}
                       used={usedSet.has(fighter.id) && fighter.id !== highlightId}

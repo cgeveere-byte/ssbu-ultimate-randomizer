@@ -5,17 +5,30 @@ import { cn } from "@/lib/cn";
 
 type GallerySort = "css" | "name";
 
-function PortraitTile({ fighter, focused }: { fighter: Fighter; focused?: boolean }) {
+function PortraitTile({
+  fighter,
+  focused,
+  onSelect,
+}: {
+  fighter: Fighter;
+  focused?: boolean;
+  onSelect?: () => void;
+}) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
   return (
-    <figure
-      id={`gallery-${fighter.id}`}
-      className={cn(
-        "overflow-hidden rounded-[var(--radius-lg)] border bg-bg-elevated scroll-mt-24",
-        focused ? "border-accent ring-2 ring-accent/50" : "border-border",
-      )}
+    <button
+      type="button"
+      onClick={onSelect}
+      className="w-full text-left"
     >
+      <figure
+        id={`gallery-${fighter.id}`}
+        className={cn(
+          "overflow-hidden rounded-[var(--radius-lg)] border bg-bg-elevated scroll-mt-24 transition-[border-color,box-shadow] hover:border-border-strong",
+          focused ? "border-accent ring-2 ring-accent/50" : "border-border",
+        )}
+      >
       <div className="relative aspect-square">
         {src ? (
           <img
@@ -40,6 +53,7 @@ function PortraitTile({ fighter, focused }: { fighter: Fighter; focused?: boolea
         </div>
       </div>
     </figure>
+    </button>
   );
 }
 
@@ -52,8 +66,9 @@ export function GalleryPanel() {
   }, []);
 
   useEffect(() => {
-    if (sort !== "name" || !focusId) return;
-    const el = document.getElementById(`gallery-${focusId}`);
+    if (!focusId) return;
+    const id = sort === "name" ? `gallery-${focusId}` : `css-tile-${focusId}`;
+    const el = document.getElementById(id);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [sort, focusId]);
 
@@ -109,6 +124,7 @@ export function GalleryPanel() {
       {sort === "css" ? (
         <CssRosterBoard
           className="overflow-hidden rounded-[var(--radius-lg)]"
+          highlightId={focusId}
           onSelect={(id) => {
             setFocusId(id);
             setSort("name");
@@ -118,7 +134,14 @@ export function GalleryPanel() {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {azFighters.map((fighter) => (
             <li key={fighter.id}>
-              <PortraitTile fighter={fighter} focused={focusId === fighter.id} />
+              <PortraitTile
+                fighter={fighter}
+                focused={focusId === fighter.id}
+                onSelect={() => {
+                  setFocusId(fighter.id);
+                  setSort("css");
+                }}
+              />
             </li>
           ))}
         </ul>

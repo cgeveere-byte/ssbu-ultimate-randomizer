@@ -8,7 +8,7 @@ import { QuickRollsToggle, rollDurationMs } from "@/components/quick-rolls-toggl
 import { MatchupSheet, SetScoreButton } from "@/components/stock-session-panel";
 import { FaceOffHalf, FaceOffSettings } from "@/components/face-off-half";
 import { HistorySheet } from "@/components/history-panel";
-import { type Fighter, ROSTER } from "@/lib/roster";
+import { type Fighter } from "@/lib/roster";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
 import { type PlayerPick, useRandomizerStore, requestResetSession } from "@/lib/store";
 import { playRollLock, playRollTick, unlockRollSound } from "@/lib/roll-sound";
@@ -69,16 +69,16 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const selectP1Stocks = (n: number) => { setP1Stocks(n); if (n > 0) setP2Stocks((prev) => (prev == null ? 0 : prev)); };
   const selectP2Stocks = (n: number) => { setP2Stocks(n); if (n > 0) setP1Stocks((prev) => (prev == null ? 0 : prev)); };
 
-  const flashPool = useCallback((): Fighter[] => {
+  const flashPoolFor = useCallback((playerIndex: number): Fighter[] => {
     const s = useRandomizerStore.getState();
-    const ids = new Set<string>(); const list: Fighter[] = [];
-    for (let i = 0; i < s.playerCount; i++) {
-      const pid = s.getPlayerProfileId(i);
-      for (const p of s.getPool(pid)) {
-        if (p.weight > 0 && !ids.has(p.fighter.id)) { ids.add(p.fighter.id); list.push(p.fighter); }
-      }
+    const used = s.uniqueOnly ? new Set(s.usedFighterIds[playerIndex] ?? []) : null;
+    const list: Fighter[] = [];
+    for (const p of s.getPool(s.getPlayerProfileId(playerIndex))) {
+      if (p.weight <= 0) continue;
+      if (used?.has(p.fighter.id)) continue;
+      list.push(p.fighter);
     }
-    return list.length === 0 ? ROSTER.slice() : list;
+    return list;
   }, []);
 
   const spin = useCallback(() => {
@@ -87,15 +87,22 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
     clearTimers(); unlockRollSound(); setSpinning(true); setRevealed(false); setP1Stocks(null); setP2Stocks(null);
     const final = roll();
     if (final.length === 0) { setSpinning(false); return; }
-    const pool = flashPool(); const duration = rollDurationMs(quickRolls); const start = performance.now(); let lastTick = 0;
+    const pools = final.map((_, i) => {
+      const p = flashPoolFor(i);
+      return p.length > 0 ? p : [final[i].fighter];
+    });
+    const pickFlash = (i: number) => {
+      const pool = pools[i]!;
+      return pool[Math.floor(Math.random() * pool.length)] ?? final[i].fighter;
+    };
+    const duration = rollDurationMs(quickRolls); const start = performance.now(); let lastTick = 0;
     const tick = (now: number) => {
       const elapsed = now - start; const progress = Math.min(1, elapsed / duration); const interval = 40 + progress * 180;
       if (now - lastTick >= interval) {
         lastTick = now;
         const flash: PlayerPick[] = [];
         for (let i = 0; i < final.length; i++) {
-          const f = pool[Math.floor(Math.random() * pool.length)] ?? final[i].fighter;
-          flash.push({ fighter: f, profileId: final[i].profileId, profileName: final[i].profileName });
+          flash.push({ fighter: pickFlash(i), profileId: final[i].profileId, profileName: final[i].profileName });
         }
         setDisplayPicks(flash); setReelKey((k) => k + 1); playRollTick(progress);
       }
@@ -106,9 +113,9 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
         setDisplayPicks(final); setLastPicks(final); pushHistory(final); commitUsedPicks(final); setRevealed(true); setSpinning(false); playRollLock();
       }
     };
-    setDisplayPicks(Array.from({ length: final.length }, (_, i) => ({ fighter: pool[Math.floor(Math.random() * pool.length)]!, profileId: final[i].profileId, profileName: final[i].profileName })));
+    setDisplayPicks(Array.from({ length: final.length }, (_, i) => ({ fighter: pickFlash(i), profileId: final[i].profileId, profileName: final[i].profileName })));
     requestAnimationFrame(tick);
-  }, [canRoll, flashPool, isSpinning, pushHistory, commitUsedPicks, quickRolls, roll, saveStockResult, setLastPicks, setSpinning]);
+  }, [canRoll, flashPoolFor, isSpinning, pushHistory, commitUsedPicks, quickRolls, roll, saveStockResult, setLastPicks, setSpinning]);
 
   const shown = displayPicks.length > 0 ? displayPicks : lastPicks;
   const cols = Math.min(shown.length || playerCount, 4);

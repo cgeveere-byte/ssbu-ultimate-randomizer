@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { ROSTER } from "@/lib/roster";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
-import { useRandomizerStore } from "@/lib/store";
+import { useRandomizerStore, requestResetSession } from "@/lib/store";
 import { cn } from "@/lib/cn";
 
 export function HistoryPanel() {
   const history = useRandomizerStore((s) => s.history);
-  const clearHistory = useRandomizerStore((s) => s.clearHistory);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (history.length === 0) {
@@ -31,9 +30,9 @@ export function HistoryPanel() {
           <Clock className="h-4 w-4 text-fg-subtle" strokeWidth={1.75} />
           <h2 className="text-sm font-semibold tracking-tight text-fg">Recent rolls</h2>
         </div>
-        <Button size="sm" variant="ghost" onClick={clearHistory}>
+        <Button size="sm" variant="ghost" onClick={() => requestResetSession()}>
           <Trash2 className="h-3.5 w-3.5" />
-          Clear
+          New session
         </Button>
       </div>
 
@@ -218,7 +217,6 @@ export function HistoryPanel() {
 /** Compact recent-rolls list for the face-off overlay. */
 export function HistorySheet({ onClose }: { onClose: () => void }) {
   const history = useRandomizerStore((s) => s.history);
-  const clearHistory = useRandomizerStore((s) => s.clearHistory);
 
   return (
     <div className="flex flex-col gap-2">
@@ -230,10 +228,10 @@ export function HistorySheet({ onClose }: { onClose: () => void }) {
           {history.length > 0 && (
             <button
               type="button"
-              onClick={clearHistory}
+              onClick={() => requestResetSession()}
               className="text-xs font-medium text-fg-muted hover:text-fg"
             >
-              Clear
+              New session
             </button>
           )}
           <button

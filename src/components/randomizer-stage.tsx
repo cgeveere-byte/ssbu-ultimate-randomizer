@@ -18,7 +18,7 @@ import {
   resolveWeightLevel,
 } from "@/lib/roster";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
-import { type PlayerPick, useRandomizerStore } from "@/lib/store";
+import { type PlayerPick, useRandomizerStore, requestResetSession } from "@/lib/store";
 import { playRollLock, playRollTick, unlockRollSound } from "@/lib/roll-sound";
 import { cn } from "@/lib/cn";
 
@@ -34,7 +34,6 @@ export function RandomizerStage({
   const quickRolls = useRandomizerStore((s) => s.quickRolls);
   const setQuickRolls = useRandomizerStore((s) => s.setQuickRolls);
   const usedFighterIds = useRandomizerStore((s) => s.usedFighterIds);
-  const resetUsedFighters = useRandomizerStore((s) => s.resetUsedFighters);
   const isSpinning = useRandomizerStore((s) => s.isSpinning);
   const setSpinning = useRandomizerStore((s) => s.setSpinning);
   const lastPicks = useRandomizerStore((s) => s.lastPicks);
@@ -498,11 +497,11 @@ export function RandomizerStage({
                 <button
                   type="button"
                   disabled={isSpinning}
-                  onClick={resetUsedFighters}
+                  onClick={() => requestResetSession()}
                   className="flex h-11 items-center rounded-[var(--radius-md)] border border-border bg-bg px-3 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
-                  title="Allow previously rolled fighters again"
+                  title="New session — recent rolls, unique bag, and set score"
                 >
-                  Reset unique
+                  New session
                 </button>
               )}
 

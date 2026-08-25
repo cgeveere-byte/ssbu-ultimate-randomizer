@@ -143,6 +143,7 @@ interface RandomizerState {
   setLastPicks: (picks: PlayerPick[]) => void;
   pushHistory: (picks: PlayerPick[]) => void;
   clearHistory: () => void;
+  resetSession: () => void;
 
   /** Face-off: bump this player's fighter weight by ±step, duplicating built-ins / shared profiles. */
   nudgePlayerFighterWeight: (
@@ -456,12 +457,12 @@ export const useRandomizerStore = create<RandomizerState>()(
         }));
       },
 
-      clearStockSession: () => set({ stockGames: [], usedFighterIds: emptyUsedFighters() }),
+      clearStockSession: () => get().resetSession(),
 
       setPlayerCount: (n) => set({ playerCount: Math.min(8, Math.max(1, n)) }),
       setUniqueOnly: (v) => set({ uniqueOnly: v }),
       setQuickRolls: (v) => set({ quickRolls: v }),
-      resetUsedFighters: () => set({ usedFighterIds: emptyUsedFighters() }),
+      resetUsedFighters: () => get().resetSession(),
       setSearch: (q) => set({ search: q }),
       setSeriesFilter: (series) => set({ seriesFilter: series }),
       setShowBanned: (v) => set({ showBanned: v }),
@@ -481,7 +482,14 @@ export const useRandomizerStore = create<RandomizerState>()(
           ].slice(0, 24),
         })),
 
-      clearHistory: () => set({ history: [], usedFighterIds: emptyUsedFighters() }),
+      clearHistory: () => get().resetSession(),
+
+      resetSession: () =>
+        set({
+          history: [],
+          usedFighterIds: emptyUsedFighters(),
+          stockGames: [],
+        }),
 
       roll: () => {
         const s = get();
@@ -701,6 +709,17 @@ export const useRandomizerStore = create<RandomizerState>()(
     },
   ),
 );
+
+const SESSION_CONFIRM =
+  "Start a new session?\n\nThis clears recent rolls, unique picks this session, and the set score.\n\nProfiles and weights stay.";
+
+/** Confirm, then wipe recents + unique bag + set score. Returns whether it ran. */
+export function requestResetSession(): boolean {
+  if (typeof window === "undefined") return false;
+  if (!window.confirm(SESSION_CONFIRM)) return false;
+  useRandomizerStore.getState().resetSession();
+  return true;
+}
 
 export function filterRoster(
   fighters: Fighter[],

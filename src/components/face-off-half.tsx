@@ -56,7 +56,7 @@ export function FaceOffSettings({
         <RollSfxToggle />
         {canResetUnique && (
           <button type="button" disabled={disabled} onClick={onResetUnique} className="flex h-11 items-center rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40">
-            Reset unique
+            New session
           </button>
         )}
       </div>

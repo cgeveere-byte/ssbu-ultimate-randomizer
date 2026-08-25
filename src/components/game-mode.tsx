@@ -9,7 +9,7 @@ import { FaceOffHalf, FaceOffSettings } from "@/components/face-off-half";
 import { HistorySheet } from "@/components/history-panel";
 import { type Fighter, ROSTER } from "@/lib/roster";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
-import { type PlayerPick, useRandomizerStore } from "@/lib/store";
+import { type PlayerPick, useRandomizerStore, requestResetSession } from "@/lib/store";
 import { playRollLock, playRollTick, unlockRollSound } from "@/lib/roll-sound";
 import { cn } from "@/lib/cn";
 
@@ -21,7 +21,6 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const quickRolls = useRandomizerStore((s) => s.quickRolls);
   const setQuickRolls = useRandomizerStore((s) => s.setQuickRolls);
   const usedFighterIds = useRandomizerStore((s) => s.usedFighterIds);
-  const resetUsedFighters = useRandomizerStore((s) => s.resetUsedFighters);
   const isSpinning = useRandomizerStore((s) => s.isSpinning);
   const setSpinning = useRandomizerStore((s) => s.setSpinning);
   const lastPicks = useRandomizerStore((s) => s.lastPicks);
@@ -47,7 +46,6 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
 
   const stockGames = useRandomizerStore((s) => s.stockGames);
   const recordStockGame = useRandomizerStore((s) => s.recordStockGame);
-  const clearStockSession = useRandomizerStore((s) => s.clearStockSession);
   const active = profiles.find((p) => p.id === activeProfileId) ?? profiles[0];
   const canRoll = useRandomizerStore((s) => s.canRoll());
 
@@ -138,8 +136,8 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
               <button type="button" onClick={() => { setShowMatchups(false); setShowHistory(false); setShowSettings((v) => !v); }} className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border bg-bg text-fg-muted hover:text-fg", showSettings ? "border-border-strong text-fg" : "border-border")} aria-pressed={showSettings} aria-label="Settings" title="Sound, roll length, unique"><Settings className="h-4 w-4" strokeWidth={2} /></button>
             </div>
             {showHistory && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div></>)}
-            {showMatchups && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { clearStockSession(); setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { clearStockSession(); setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div></>)}
-            {showSettings && (<><div className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={resetUsedFighters} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div><div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2"><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={resetUsedFighters} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div></>)}
+            {showMatchups && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { if (requestResetSession()) setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { if (requestResetSession()) setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div></>)}
+            {showSettings && (<><div className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={() => requestResetSession()} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div><div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2"><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={() => requestResetSession()} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div></>)}
           </div>
         </div>
         <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -190,7 +188,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
             <UniqueDupesToggle uniqueOnly={uniqueOnly} onChange={setUniqueOnly} disabled={isSpinning} size="lg" />
             <QuickRollsToggle quick={quickRolls} onChange={setQuickRolls} disabled={isSpinning} size="lg" />
             <RollSfxToggle size="lg" />
-            {uniqueOnly && usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0) && (<button type="button" disabled={isSpinning} onClick={resetUsedFighters} className="flex h-14 items-center rounded-[var(--radius-lg)] border border-border bg-bg px-3 text-sm font-medium text-fg-muted hover:text-fg disabled:opacity-40" title="Allow previously rolled fighters again">Reset unique</button>)}
+            {uniqueOnly && usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0) && (<button type="button" disabled={isSpinning} onClick={() => requestResetSession()} className="flex h-14 items-center rounded-[var(--radius-lg)] border border-border bg-bg px-3 text-sm font-medium text-fg-muted hover:text-fg disabled:opacity-40" title="New session — recent rolls, unique bag, and set score">New session</button>)}
             <button type="button" disabled={isSpinning} onClick={() => { if (playerCount !== 2) setPlayerCount(2); setFaceOff(true); }} className={cn("flex h-14 items-center gap-1.5 rounded-[var(--radius-lg)] border px-3 text-sm font-semibold transition-colors sm:px-4", "border-border-strong bg-bg-subtle text-fg hover:bg-bg")} title="2-player face-off"><Users className="h-4 w-4" strokeWidth={2} />Face-off</button>
           </div>
           <button type="button" onClick={spin} disabled={isSpinning || !canRoll} className={cn("flex h-16 w-full items-center justify-center gap-3 rounded-[var(--radius-xl)] text-xl font-bold tracking-tight transition-[opacity,transform] duration-150 active:scale-[0.99] sm:h-20 sm:text-2xl", "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30", "disabled:pointer-events-none disabled:opacity-45")}>

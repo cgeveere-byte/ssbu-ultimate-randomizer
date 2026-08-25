@@ -300,7 +300,7 @@ export function GameMode({
         </div>
 
         {/* Shared control strip in the middle (readable from either side) */}
-        <div className="relative z-10 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
+        <div className="relative z-40 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
           <div className="relative w-full">
             <div className="relative flex h-12 items-center">
               <div className="relative z-10 flex min-w-0 items-center gap-1">

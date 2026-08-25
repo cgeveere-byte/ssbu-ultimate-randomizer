@@ -113,13 +113,6 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const shown = displayPicks.length > 0 ? displayPicks : lastPicks;
   const cols = Math.min(shown.length || playerCount, 4);
   const uniqueExhausted = uniqueOnly && !canRoll && usedFighterIds.slice(0, playerCount).some((ids) => ids.length > 0);
-  const unionUsed = useMemo(() => {
-    const s = new Set<string>();
-    for (let i = 0; i < playerCount; i++) {
-      for (const id of usedFighterIds[i] ?? []) s.add(id);
-    }
-    return s;
-  }, [usedFighterIds, playerCount]);
   const cssMarks: CssMark[] = shown.map((p, i) => ({
     id: p.fighter.id,
     color: playerColor(i).hex,
@@ -178,7 +171,6 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
             <CssRosterBoard
               fill
               className="h-full"
-              used={unionUsed}
               marks={cssMarks}
               dimOthers={revealed && !isSpinning && shown.length > 0}
             />

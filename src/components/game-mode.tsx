@@ -166,6 +166,7 @@ export function GameMode({
 
     saveStockResult();
     setShowSettings(false);
+    setShowMatchups(false);
 
     clearTimers();
     unlockRollSound();
@@ -301,143 +302,163 @@ export function GameMode({
         {/* Shared control strip in the middle (readable from either side) */}
         <div className="relative z-10 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
           <div className="relative w-full">
-            {showMatchups ? (
-              <div className="mx-auto w-full max-w-lg">
-                <MatchupSheet
+            <div className="relative flex h-12 items-center">
+              <div className="relative z-10 flex min-w-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={onExit}
+                  disabled={isSpinning}
+                  className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
+                  aria-label="Exit game mode"
+                >
+                  <X className="h-3.5 w-3.5" strokeWidth={2} />
+                  Exit
+                </button>
+                <button
+                  type="button"
+                  disabled={isSpinning}
+                  onClick={disableFaceOff}
+                  className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
+                  title="Standard layout"
+                >
+                  <Undo2 className="h-3.5 w-3.5" strokeWidth={2} />
+                  Standard
+                </button>
+                <SetScoreButton
                   games={stockGames}
-                  onReset={() => {
-                    clearStockSession();
-                    setShowMatchups(false);
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowMatchups((v) => !v);
                   }}
-                  onClose={() => setShowMatchups(false)}
                 />
               </div>
-            ) : (
+
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={spin}
+                  disabled={isSpinning || !canRoll}
+                  className={cn(
+                    "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]",
+                    "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30",
+                    "disabled:pointer-events-none disabled:opacity-45",
+                  )}
+                  aria-label={
+                    uniqueExhausted
+                      ? "Reset unique"
+                      : !canRoll
+                        ? "No fighters"
+                        : canSave
+                          ? `Save ${p1Stocks}–${p2Stocks} and roll`
+                          : "Randomize"
+                  }
+                  title={
+                    uniqueExhausted
+                      ? "Reset unique"
+                      : canSave
+                        ? `Save ${p1Stocks}–${p2Stocks} · Roll`
+                        : "Randomize"
+                  }
+                >
+                  {isSpinning ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : uniqueExhausted || !canRoll ? (
+                    <Ban className="h-6 w-6" />
+                  ) : (
+                    <Dices className="h-6 w-6" strokeWidth={2} />
+                  )}
+                </button>
+              </div>
+
+              <div className="relative z-10 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMatchups(false);
+                    setShowSettings((v) => !v);
+                  }}
+                  className={cn(
+                    "flex h-11 items-center gap-1.5 rounded-[var(--radius-md)] border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg",
+                    showSettings
+                      ? "border-border-strong text-fg"
+                      : "border-border",
+                  )}
+                  aria-pressed={showSettings}
+                  title="Sound, roll length, unique"
+                >
+                  <Settings className="h-3.5 w-3.5" strokeWidth={2} />
+                  Settings
+                </button>
+              </div>
+            </div>
+
+            {showMatchups && (
               <>
-                <div className="relative flex h-12 items-center">
-                  <div className="relative z-10 flex min-w-0 items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={onExit}
-                      disabled={isSpinning}
-                      className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
-                      aria-label="Exit game mode"
-                    >
-                      <X className="h-3.5 w-3.5" strokeWidth={2} />
-                      Exit
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSpinning}
-                      onClick={disableFaceOff}
-                      className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
-                      title="Standard layout"
-                    >
-                      <Undo2 className="h-3.5 w-3.5" strokeWidth={2} />
-                      Standard
-                    </button>
-                    <SetScoreButton
+                <div
+                  className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]"
+                  style={{ transform: "translateX(-50%) rotate(180deg)" }}
+                >
+                  <div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft">
+                    <MatchupSheet
                       games={stockGames}
-                      onClick={() => {
-                        setShowSettings(false);
-                        setShowMatchups(true);
+                      onReset={() => {
+                        clearStockSession();
+                        setShowMatchups(false);
                       }}
+                      onClose={() => setShowMatchups(false)}
                     />
                   </div>
-
-                  <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={spin}
-                      disabled={isSpinning || !canRoll}
-                      className={cn(
-                        "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]",
-                        "bg-accent text-accent-fg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30",
-                        "disabled:pointer-events-none disabled:opacity-45",
-                      )}
-                      aria-label={
-                        uniqueExhausted
-                          ? "Reset unique"
-                          : !canRoll
-                            ? "No fighters"
-                            : canSave
-                              ? `Save ${p1Stocks}–${p2Stocks} and roll`
-                              : "Randomize"
-                      }
-                      title={
-                        uniqueExhausted
-                          ? "Reset unique"
-                          : canSave
-                            ? `Save ${p1Stocks}–${p2Stocks} · Roll`
-                            : "Randomize"
-                      }
-                    >
-                      {isSpinning ? (
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                      ) : uniqueExhausted || !canRoll ? (
-                        <Ban className="h-6 w-6" />
-                      ) : (
-                        <Dices className="h-6 w-6" strokeWidth={2} />
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="relative z-10 ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => setShowSettings((v) => !v)}
-                      className={cn(
-                        "flex h-11 items-center gap-1.5 rounded-[var(--radius-md)] border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg",
-                        showSettings
-                          ? "border-border-strong text-fg"
-                          : "border-border",
-                      )}
-                      aria-pressed={showSettings}
-                      title="Sound, roll length, unique"
-                    >
-                      <Settings className="h-3.5 w-3.5" strokeWidth={2} />
-                      Settings
-                    </button>
+                </div>
+                <div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2">
+                  <div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft">
+                    <MatchupSheet
+                      games={stockGames}
+                      onReset={() => {
+                        clearStockSession();
+                        setShowMatchups(false);
+                      }}
+                      onClose={() => setShowMatchups(false)}
+                    />
                   </div>
                 </div>
+              </>
+            )}
 
-                {showSettings && (
-                  <>
-                    <div
-                      className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]"
-                      style={{ transform: "translateX(-50%) rotate(180deg)" }}
-                    >
-                      <FaceOffSettings
-                        uniqueOnly={uniqueOnly}
-                        onUniqueOnly={setUniqueOnly}
-                        quickRolls={quickRolls}
-                        onQuickRolls={setQuickRolls}
-                        canResetUnique={
-                          uniqueOnly &&
-                          usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)
-                        }
-                        onResetUnique={resetUsedFighters}
-                        disabled={isSpinning}
-                        onClose={() => setShowSettings(false)}
-                      />
-                    </div>
-                    <div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2">
-                      <FaceOffSettings
-                        uniqueOnly={uniqueOnly}
-                        onUniqueOnly={setUniqueOnly}
-                        quickRolls={quickRolls}
-                        onQuickRolls={setQuickRolls}
-                        canResetUnique={
-                          uniqueOnly &&
-                          usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)
-                        }
-                        onResetUnique={resetUsedFighters}
-                        disabled={isSpinning}
-                        onClose={() => setShowSettings(false)}
-                      />
-                    </div>
-                  </>
-                )}
+            {showSettings && (
+              <>
+                <div
+                  className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]"
+                  style={{ transform: "translateX(-50%) rotate(180deg)" }}
+                >
+                  <FaceOffSettings
+                    uniqueOnly={uniqueOnly}
+                    onUniqueOnly={setUniqueOnly}
+                    quickRolls={quickRolls}
+                    onQuickRolls={setQuickRolls}
+                    canResetUnique={
+                      uniqueOnly &&
+                      usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)
+                    }
+                    onResetUnique={resetUsedFighters}
+                    disabled={isSpinning}
+                    onClose={() => setShowSettings(false)}
+                  />
+                </div>
+                <div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2">
+                  <FaceOffSettings
+                    uniqueOnly={uniqueOnly}
+                    onUniqueOnly={setUniqueOnly}
+                    quickRolls={quickRolls}
+                    onQuickRolls={setQuickRolls}
+                    canResetUnique={
+                      uniqueOnly &&
+                      usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)
+                    }
+                    onResetUnique={resetUsedFighters}
+                    disabled={isSpinning}
+                    onClose={() => setShowSettings(false)}
+                  />
+                </div>
               </>
             )}
           </div>

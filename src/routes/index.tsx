@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Dices, Images, Maximize2, SlidersHorizontal } from "lucide-react";
+import { Dices, Images, Maximize2, SlidersHorizontal, Users } from "lucide-react";
 import { Toaster } from "sonner";
 import { ClientOnly } from "@/components/client-only";
 import { RandomizerStage } from "@/components/randomizer-stage";
@@ -24,13 +24,15 @@ function AppShell() {
   const [gameMode, setGameMode] = useState(false);
   const profiles = useRandomizerStore((s) => s.profiles);
   const activeProfileId = useRandomizerStore((s) => s.activeProfileId);
+  const playerCount = useRandomizerStore((s) => s.playerCount);
+  const twoPlayer = playerCount === 2;
   const activeName =
     profiles.find((p) => p.id === activeProfileId)?.name ?? "Default";
 
   if (gameMode) {
     return (
       <>
-        <GameMode onExit={() => setGameMode(false)} />
+        <GameMode onExit={() => setGameMode(false)} startFaceOff={twoPlayer} />
         <Toaster
           theme="dark"
           position="bottom-center"
@@ -80,10 +82,17 @@ function AppShell() {
                 <button
                   type="button"
                   onClick={() => setGameMode(true)}
-                  className="game-mode-rainbow flex h-10 items-center gap-2 rounded-[var(--radius-md)] px-3 text-xs font-semibold transition-opacity duration-150 hover:opacity-90"
+                  className={cn(
+                    "game-mode-rainbow flex items-center gap-2 rounded-[var(--radius-md)] font-semibold transition-opacity duration-150 hover:opacity-90",
+                    twoPlayer ? "h-12 px-4 text-sm" : "h-10 px-3 text-xs",
+                  )}
                 >
-                  <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
-                  Game mode
+                  {twoPlayer ? (
+                    <Users className="h-4 w-4" strokeWidth={2} />
+                  ) : (
+                    <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
+                  )}
+                  {twoPlayer ? "Face-off" : "Game mode"}
                 </button>
                 <button
                   type="button"

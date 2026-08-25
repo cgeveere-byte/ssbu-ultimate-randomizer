@@ -33,7 +33,13 @@ const PREF_MAX = 10;
  * Face-off (chess-clock): one side upright, the other rotated 180°.
  * Preference − / + on each half edits that player's profile (built-ins are copied first).
  */
-export function GameMode({ onExit }: { onExit: () => void }) {
+export function GameMode({
+  onExit,
+  startFaceOff = false,
+}: {
+  onExit: () => void;
+  startFaceOff?: boolean;
+}) {
   const playerCount = useRandomizerStore((s) => s.playerCount);
   const setPlayerCount = useRandomizerStore((s) => s.setPlayerCount);
   const uniqueOnly = useRandomizerStore((s) => s.uniqueOnly);
@@ -56,7 +62,7 @@ export function GameMode({ onExit }: { onExit: () => void }) {
   const [displayPicks, setDisplayPicks] = useState<PlayerPick[]>([]);
   const [revealed, setRevealed] = useState(false);
   const [reelKey, setReelKey] = useState(0);
-  const [faceOff, setFaceOff] = useState(false);
+  const [faceOff, setFaceOff] = useState(startFaceOff);
   const [p1Stocks, setP1Stocks] = useState<number | null>(null);
   const [p2Stocks, setP2Stocks] = useState<number | null>(null);
   const [showMatchups, setShowMatchups] = useState(false);

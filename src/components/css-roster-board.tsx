@@ -73,7 +73,7 @@ export function CssRosterBoard({
                     used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                     highlight={highlightId === fighter.id}
                     pulse={pulse && highlightId === fighter.id}
-                    dimmed={dimOthers && fighter.id !== highlightId}
+                    dimmed={dimOthers && fighter.id !== highlightId && fighter.id !== markId}
                     marked={markId === fighter.id}
                     markColor={markColor}
                     markLabel={markLabel}
@@ -110,7 +110,7 @@ export function CssRosterBoard({
                       used={usedSet.has(fighter.id) && fighter.id !== highlightId}
                       highlight={highlightId === fighter.id}
                       pulse={pulse && highlightId === fighter.id}
-                      dimmed={dimOthers && fighter.id !== highlightId}
+                      dimmed={dimOthers && fighter.id !== highlightId && fighter.id !== markId}
                       marked={markId === fighter.id}
                       markColor={markColor}
                       markLabel={markLabel}

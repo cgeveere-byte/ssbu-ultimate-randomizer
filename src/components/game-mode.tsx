@@ -313,26 +313,26 @@ export function GameMode({
             ) : (
               <>
                 <div className="grid grid-cols-3 items-center gap-1">
-                  <div className="flex items-center justify-start gap-1">
+                  <div className="flex min-w-0 items-center justify-start gap-1 overflow-x-auto">
                     <button
                       type="button"
                       onClick={onExit}
                       disabled={isSpinning}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
+                      className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
                       aria-label="Exit game mode"
-                      title="Exit"
                     >
-                      <X className="h-4 w-4" strokeWidth={2} />
+                      <X className="h-3.5 w-3.5" strokeWidth={2} />
+                      Exit
                     </button>
                     <button
                       type="button"
                       disabled={isSpinning}
                       onClick={disableFaceOff}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg text-fg-muted hover:text-fg disabled:opacity-40"
+                      className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
                       title="Standard layout"
-                      aria-label="Switch to standard layout"
                     >
-                      <Undo2 className="h-4 w-4" strokeWidth={2} />
+                      <Undo2 className="h-3.5 w-3.5" strokeWidth={2} />
+                      Standard
                     </button>
                     <SetScoreButton
                       games={stockGames}
@@ -385,16 +385,16 @@ export function GameMode({
                       type="button"
                       onClick={() => setShowSettings((v) => !v)}
                       className={cn(
-                        "flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] border bg-bg text-fg-muted hover:text-fg",
+                        "flex h-11 items-center gap-1.5 rounded-[var(--radius-md)] border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg",
                         showSettings
                           ? "border-border-strong text-fg"
                           : "border-border",
                       )}
-                      aria-label="Roll settings"
                       aria-pressed={showSettings}
                       title="Sound, roll length, unique"
                     >
-                      <Settings className="h-4 w-4" strokeWidth={2} />
+                      <Settings className="h-3.5 w-3.5" strokeWidth={2} />
+                      Settings
                     </button>
                   </div>
                 </div>

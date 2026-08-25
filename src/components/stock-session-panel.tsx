@@ -1,16 +1,60 @@
 import { Trophy, RotateCcw } from "lucide-react";
-import { playerBadgeFg, playerColor } from "@/lib/player-colors";
+import { playerColor } from "@/lib/player-colors";
+import {
+  ROSTER,
+  fighterPortraitUrl,
+  fighterTileStyle,
+  initials,
+} from "@/lib/roster";
 import {
   type MatchupStat,
   type StockGame,
   bestAndWorst,
-  fighterLabel,
-  formatMatchup,
   formatMatchupRecord,
   setScore,
   winnerOf,
 } from "@/lib/stock-session";
 import { cn } from "@/lib/cn";
+
+function TinyPortrait({ id }: { id: string }) {
+  const fighter = ROSTER.find((f) => f.id === id);
+  const src = fighterPortraitUrl(id);
+  const tile = fighterTileStyle(id);
+  const name = fighter?.name ?? id;
+  return (
+    <span
+      className="inline-block h-7 w-7 shrink-0 overflow-hidden rounded-[5px] bg-bg-subtle ring-1 ring-black/30"
+      title={name}
+    >
+      {src ? (
+        <img
+          src={src}
+          alt={name}
+          draggable={false}
+          className="h-full w-full object-cover object-center"
+        />
+      ) : (
+        <span
+          className="flex h-full w-full items-center justify-center text-[9px] font-semibold text-fg"
+          style={tile}
+          aria-hidden
+        >
+          {fighter ? initials(fighter.name) : "?"}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function VsPair({ a, b }: { a: string; b: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <TinyPortrait id={a} />
+      <span className="text-[10px] font-medium text-fg-subtle">vs</span>
+      <TinyPortrait id={b} />
+    </span>
+  );
+}
 
 function MatchupLine({
   label,
@@ -29,18 +73,18 @@ function MatchupLine({
     );
   }
   return (
-    <p className="text-xs leading-snug text-fg">
+    <div className="flex items-center gap-2 py-0.5 text-xs leading-snug text-fg">
       <span
         className={cn(
-          "mr-1.5 font-semibold uppercase tracking-wide",
+          "w-10 shrink-0 font-semibold uppercase tracking-wide",
           tone === "best" ? "text-success" : "text-danger",
         )}
       >
         {label}
       </span>
-      <span className="font-medium">{formatMatchup(stat)}</span>
-      <span className="text-fg-muted"> · {formatMatchupRecord(stat)}</span>
-    </p>
+      <VsPair a={stat.myFighterId} b={stat.theirFighterId} />
+      <span className="text-fg-muted">· {formatMatchupRecord(stat)}</span>
+    </div>
   );
 }
 
@@ -113,14 +157,16 @@ export function MatchupSheet({
       </div>
 
       {games.length > 0 && (
-        <ul className="max-h-28 overflow-y-auto text-xs text-fg-muted">
+        <ul className="max-h-32 overflow-y-auto text-xs text-fg-muted">
           {games.slice(0, 8).map((g) => {
             const w = winnerOf(g);
             return (
-              <li key={g.id} className="flex items-center justify-between gap-2 py-0.5">
-                <span className="min-w-0 truncate">
-                  {fighterLabel(g.p1FighterId)} vs {fighterLabel(g.p2FighterId)}
-                  {g.timedOut ? " · time" : ""}
+              <li key={g.id} className="flex items-center justify-between gap-2 py-1">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <VsPair a={g.p1FighterId} b={g.p2FighterId} />
+                  {g.timedOut ? (
+                    <span className="text-[10px] text-fg-subtle">time</span>
+                  ) : null}
                 </span>
                 <span className="tabular shrink-0 font-semibold text-fg">
                   {g.p1Stocks}–{g.p2Stocks}

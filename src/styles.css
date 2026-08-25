@@ -125,10 +125,82 @@
   animation: pulse-ring 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+@property --shimmer-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
+}
+
+@keyframes shimmer-spin {
+  to {
+    --shimmer-angle: 360deg;
+  }
+}
+
+.game-mode-rainbow {
+  position: relative;
+  isolation: isolate;
+  color: #f0ece8;
+  background-image: linear-gradient(
+    45deg,
+    #5c383c,
+    #5c4a32,
+    #4e4e36,
+    #325c44,
+    #324a54,
+    #363c58,
+    #4a3254,
+    #5c3848
+  );
+  animation: shimmer-spin 3.2s linear infinite;
+}
+
+.game-mode-rainbow::before,
+.game-mode-rainbow::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--shimmer-angle),
+    #b85c5c,
+    #b8884a,
+    #a8a05a,
+    #4a9a72,
+    #4a8aa8,
+    #5c6cb0,
+    #8a5ca0,
+    #b85c80,
+    #b85c5c
+  );
+}
+
+.game-mode-rainbow::before {
+  inset: -1.5px;
+  z-index: -1;
+  padding: 1.5px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.game-mode-rainbow::after {
+  inset: -5px;
+  z-index: -2;
+  opacity: 0.45;
+  filter: blur(7px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-reel,
   .animate-result-in,
   .animate-pulse-ring {
     animation: none !important;
+  }
+
+  .game-mode-rainbow {
+    animation: none;
   }
 }

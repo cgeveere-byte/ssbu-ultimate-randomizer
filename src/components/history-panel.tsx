@@ -214,3 +214,94 @@ export function HistoryPanel() {
     </section>
   );
 }
+
+/** Compact recent-rolls list for the face-off overlay. */
+export function HistorySheet({ onClose }: { onClose: () => void }) {
+  const history = useRandomizerStore((s) => s.history);
+  const clearHistory = useRandomizerStore((s) => s.clearHistory);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">
+          Recent rolls
+        </p>
+        <div className="flex items-center gap-2">
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={clearHistory}
+              className="text-xs font-medium text-fg-muted hover:text-fg"
+            >
+              Clear
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs font-medium text-fg-muted hover:text-fg"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+      {history.length === 0 ? (
+        <p className="py-3 text-center text-sm text-fg-muted">No rolls yet.</p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {history.map((entry) => {
+            const fighters = entry.fighterIds.map((id) =>
+              ROSTER.find((f) => f.id === id),
+            );
+            const time = new Date(entry.at);
+            return (
+              <li
+                key={entry.id}
+                className="flex items-center gap-2 rounded-[var(--radius-md)] border border-border bg-bg px-2 py-1.5"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  {fighters.map((f, i) =>
+                    f ? (
+                      <span
+                        key={`${entry.id}-${f.id}-${i}`}
+                        className="flex min-w-0 items-center gap-1"
+                      >
+                        {i > 0 && (
+                          <span className="px-0.5 text-[10px] font-medium text-fg-subtle">
+                            vs
+                          </span>
+                        )}
+                        <span
+                          className="flex min-w-0 items-center gap-1"
+                          title={`P${i + 1} · ${f.name}`}
+                        >
+                          <FighterMonogram fighter={f} size="sm" />
+                          <span
+                            className="hidden truncate text-xs font-medium text-fg sm:inline"
+                          >
+                            {f.name}
+                          </span>
+                          <span
+                            className="h-1 w-1 shrink-0 rounded-full"
+                            style={{ background: playerColor(i).hex }}
+                            aria-hidden
+                          />
+                        </span>
+                      </span>
+                    ) : null,
+                  )}
+                </div>
+                <span className="shrink-0 tabular text-[10px] text-fg-subtle">
+                  {time.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Dices, Loader2, Minus, Plus, Settings, Undo2, Users, X } from "lucide-react";
+import { Ban, Clock, Dices, Loader2, Minus, Plus, Settings, Undo2, Users, X } from "lucide-react";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { QuickRollsToggle, rollDurationMs } from "@/components/quick-rolls-toggle";
 import { MatchupSheet, SetScoreButton } from "@/components/stock-session-panel";
 import { FaceOffHalf, FaceOffSettings } from "@/components/face-off-half";
+import { HistorySheet } from "@/components/history-panel";
 import { type Fighter, ROSTER } from "@/lib/roster";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
 import { type PlayerPick, useRandomizerStore } from "@/lib/store";
@@ -39,6 +40,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const [p2Stocks, setP2Stocks] = useState<number | null>(null);
   const [showMatchups, setShowMatchups] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [p1View, setP1View] = useState<"portrait" | "css">("css");
   const [p2View, setP2View] = useState<"portrait" | "css">("css");
   const timers = useRef<number[]>([]);
@@ -80,7 +82,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
 
   const spin = useCallback(() => {
     if (isSpinning || !canRoll) return;
-    saveStockResult(); setShowSettings(false); setShowMatchups(false);
+    saveStockResult(); setShowSettings(false); setShowMatchups(false); setShowHistory(false);
     clearTimers(); unlockRollSound(); setSpinning(true); setRevealed(false); setP1Stocks(null); setP2Stocks(null);
     const final = roll();
     if (final.length === 0) { setSpinning(false); return; }
@@ -127,13 +129,15 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
               <div className="flex min-w-0 items-center gap-1">
                 <button type="button" onClick={onExit} disabled={isSpinning} className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40" aria-label="Exit game mode"><X className="h-3.5 w-3.5" strokeWidth={2} />Exit</button>
                 <button type="button" disabled={isSpinning} onClick={() => setFaceOff(false)} className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40" title="Standard layout"><Undo2 className="h-3.5 w-3.5" strokeWidth={2} />Standard</button>
-                <SetScoreButton games={stockGames} onClick={() => { setShowSettings(false); setShowMatchups((v) => !v); }} />
+                <SetScoreButton games={stockGames} onClick={() => { setShowSettings(false); setShowHistory(false); setShowMatchups((v) => !v); }} />
               </div>
               <button type="button" onClick={spin} disabled={isSpinning || !canRoll} className={cn("roll-gold flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]", "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/30", "disabled:pointer-events-none disabled:opacity-45")} aria-label={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} title={uniqueExhausted ? "Reset unique" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} \u00b7 Roll` : "Randomize"}>
                 {isSpinning ? <Loader2 className="h-6 w-6 animate-spin" /> : uniqueExhausted || !canRoll ? <Ban className="h-6 w-6" /> : <Dices className="h-6 w-6" strokeWidth={2} />}
               </button>
-              <button type="button" onClick={() => { setShowMatchups(false); setShowSettings((v) => !v); }} className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg", showSettings ? "border-border-strong text-fg" : "border-border")} aria-pressed={showSettings} title="Sound, roll length, unique"><Settings className="h-3.5 w-3.5" strokeWidth={2} />Settings</button>
+              <button type="button" onClick={() => { setShowMatchups(false); setShowHistory(false); setShowSettings((v) => !v); }} className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg", showSettings ? "border-border-strong text-fg" : "border-border")} aria-pressed={showSettings} title="Sound, roll length, unique"><Settings className="h-3.5 w-3.5" strokeWidth={2} />Settings</button>
+              <button type="button" onClick={() => { setShowSettings(false); setShowMatchups(false); setShowHistory((v) => !v); }} className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg", showHistory ? "border-border-strong text-fg" : "border-border")} aria-pressed={showHistory} title="Recent rolls"><Clock className="h-3.5 w-3.5" strokeWidth={2} />Rolls</button>
             </div>
+            {showHistory && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div></>)}
             {showMatchups && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { clearStockSession(); setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { clearStockSession(); setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div></>)}
             {showSettings && (<><div className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={resetUsedFighters} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div><div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2"><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={resetUsedFighters} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div></>)}
           </div>

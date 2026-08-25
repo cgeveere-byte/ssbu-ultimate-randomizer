@@ -18,6 +18,9 @@ export function CssRosterBoard({
   onSelect,
   fill = false,
   dimOthers = false,
+  markId = null,
+  markColor,
+  markLabel,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
@@ -27,6 +30,9 @@ export function CssRosterBoard({
   onSelect?: (id: string) => void;
   fill?: boolean;
   dimOthers?: boolean;
+  markId?: string | null;
+  markColor?: string;
+  markLabel?: string;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
@@ -68,6 +74,9 @@ export function CssRosterBoard({
                     highlight={highlightId === fighter.id}
                     pulse={pulse && highlightId === fighter.id}
                     dimmed={dimOthers && fighter.id !== highlightId}
+                    marked={markId === fighter.id}
+                    markColor={markColor}
+                    markLabel={markLabel}
                     fill={fill}
                     onSelect={onSelect}
                   />
@@ -102,6 +111,9 @@ export function CssRosterBoard({
                       highlight={highlightId === fighter.id}
                       pulse={pulse && highlightId === fighter.id}
                       dimmed={dimOthers && fighter.id !== highlightId}
+                      marked={markId === fighter.id}
+                      markColor={markColor}
+                      markLabel={markLabel}
                       fill={fill}
                       onSelect={onSelect}
                     />
@@ -122,6 +134,9 @@ function CssTile({
   highlight,
   pulse,
   dimmed,
+  marked,
+  markColor,
+  markLabel,
   fill,
   onSelect,
 }: {
@@ -130,6 +145,9 @@ function CssTile({
   highlight: boolean;
   pulse?: boolean;
   dimmed?: boolean;
+  marked?: boolean;
+  markColor?: string;
+  markLabel?: string;
   fill?: boolean;
   onSelect?: (id: string) => void;
 }) {
@@ -187,6 +205,22 @@ function CssTile({
         </>
       )}
 
+      {marked && markColor && (
+        <>
+          <span
+            className="pointer-events-none absolute inset-0 z-[1] rounded-[2px]"
+            style={{ boxShadow: `inset 0 0 0 1.5px ${markColor}` }}
+          />
+          <span
+            className="pointer-events-none absolute right-0 top-0 z-[2] h-0 w-0"
+            style={{
+              borderTop: `9px solid ${markColor}`,
+              borderLeft: "9px solid transparent",
+            }}
+            title={markLabel ? `${markLabel} pick` : "Opponent pick"}
+          />
+        </>
+      )}
       {used && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <span className="absolute h-[78%] w-[2px] rotate-45 rounded-full bg-white/80" />

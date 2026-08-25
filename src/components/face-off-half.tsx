@@ -65,7 +65,7 @@ export function FaceOffSettings({
 }
 
 export function FaceOffHalf({
-  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds,
+  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId,
 }: {
   pick: PlayerPick | null;
   playerIndex: number;
@@ -81,6 +81,7 @@ export function FaceOffHalf({
   view: "portrait" | "css";
   onToggleView: () => void;
   usedIds: readonly string[];
+  opponentId?: string | null;
 }) {
   const pc = playerColor(playerIndex);
   const profiles = useRandomizerStore((s) => s.profiles);
@@ -98,6 +99,9 @@ export function FaceOffHalf({
   const portrait = pick ? fighterPortraitUrl(pick.fighter.id) : null;
   const tile = pick ? fighterTileStyle(pick.fighter.id) : undefined;
   const usedSet = useMemo(() => new Set(usedIds), [usedIds]);
+  const foeIndex = playerIndex === 0 ? 1 : 0;
+  const foeColor = playerColor(foeIndex);
+  const showFoe = Boolean(opponentId) && revealed && !isSpinning;
 
   const viewToggle = (
     <button type="button" onClick={onToggleView} title={view === "css" ? "Large portrait" : "Character select"} className="flex h-7 items-center gap-1 rounded-full border border-white/25 bg-black/40 px-2 text-[11px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm hover:bg-black/55">
@@ -145,6 +149,9 @@ export function FaceOffHalf({
             pulse={Boolean(pick) && revealed && !isSpinning}
             pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
             dimOthers={Boolean(pick) && revealed && !isSpinning}
+            markId={showFoe ? opponentId ?? null : null}
+            markColor={foeColor.hex}
+            markLabel={`P${foeIndex + 1}`}
             fill
             className="h-full"
           />

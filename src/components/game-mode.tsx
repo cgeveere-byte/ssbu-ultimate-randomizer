@@ -39,8 +39,8 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const [p2Stocks, setP2Stocks] = useState<number | null>(null);
   const [showMatchups, setShowMatchups] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [p1View, setP1View] = useState<"portrait" | "css">("portrait");
-  const [p2View, setP2View] = useState<"portrait" | "css">("portrait");
+  const [p1View, setP1View] = useState<"portrait" | "css">("css");
+  const [p2View, setP2View] = useState<"portrait" | "css">("css");
   const timers = useRef<number[]>([]);
 
   const stockGames = useRandomizerStore((s) => s.stockGames);

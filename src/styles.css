@@ -193,6 +193,58 @@
   filter: blur(7px);
 }
 
+.roll-gold {
+  position: relative;
+  isolation: isolate;
+  color: #f5e6b8;
+  background-image: linear-gradient(
+    45deg,
+    #4a3a14,
+    #6a5420,
+    #8a6e28,
+    #6a5420,
+    #4a3a14
+  );
+  animation: shimmer-spin 3.2s linear infinite;
+}
+
+.roll-gold::before,
+.roll-gold::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--shimmer-angle),
+    #7a5a18,
+    #e8c96a,
+    #fff6d0,
+    #d4a017,
+    #8a6a20,
+    #f0d78a,
+    #c9a227,
+    #7a5a18
+  );
+}
+
+.roll-gold::before {
+  inset: -1.5px;
+  z-index: -1;
+  padding: 1.5px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.roll-gold::after {
+  inset: -5px;
+  z-index: -2;
+  opacity: 0.5;
+  filter: blur(7px);
+}
+
 @keyframes css-flash {
   0% {
     outline-color: #fde047;
@@ -336,7 +388,8 @@
     animation: none !important;
   }
 
-  .game-mode-rainbow {
+  .game-mode-rainbow,
+  .roll-gold {
     animation: none;
   }
 

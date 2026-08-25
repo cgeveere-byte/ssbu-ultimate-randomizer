@@ -237,11 +237,9 @@ export const CSS_ROSTER_IDS = [
 
 const ROSTER_BY_ID = new Map(ROSTER.map((f) => [f.id, f]));
 
-export const CSS_ROSTER: Fighter[] = CSS_ROSTER_IDS.map((id) => {
-  const f = ROSTER_BY_ID.get(id);
-  if (!f) throw new Error(`CSS roster missing fighter: ${id}`);
-  return f;
-});
+export const CSS_ROSTER: Fighter[] = CSS_ROSTER_IDS.map((id) => ROSTER_BY_ID.get(id)).filter(
+  (f): f is Fighter => Boolean(f),
+);
 
 export function cssRosterRows(): Fighter[][] {
   const rows: Fighter[][] = [];

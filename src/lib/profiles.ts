@@ -211,7 +211,7 @@ export function normalizeWeights(
 export function ensureBuiltInProfiles(profiles: WeightProfile[]): WeightProfile[] {
   const reserved = new Set<string>(BUILTIN_PROFILE_IDS);
   const rest = profiles
-    .filter((p) => !reserved.has(p.id))
+    .filter((p): p is WeightProfile => Boolean(p) && typeof p.id === "string" && !reserved.has(p.id))
     .map((p) => ({
       ...p,
       weights: normalizeWeights(p.weights as Record<string, number | string>),

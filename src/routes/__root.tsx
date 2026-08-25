@@ -19,12 +19,6 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      ...portraitUrls().map((href) => ({
-        rel: "preload" as const,
-        href,
-        as: "image" as const,
-        type: "image/webp",
-      })),
     ],
   }),
   component: RootDocument,

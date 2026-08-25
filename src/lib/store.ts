@@ -635,49 +635,54 @@ export const useRandomizerStore = create<RandomizerState>()(
         };
       },
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<RandomizerState>;
-        const profilesRaw = ensureBuiltInProfiles(
-          Array.isArray(p.profiles) ? p.profiles : current.profiles,
-        );
-        const scale =
-          typeof (p as { weightPresetScale?: unknown }).weightPresetScale === "number"
-            ? (p as { weightPresetScale: number }).weightPresetScale
-            : 2;
-        const profiles =
-          scale < WEIGHT_PRESET_SCALE
-            ? profilesRaw.map((prof) =>
-                isBuiltInProfileId(prof.id)
-                  ? prof
-                  : { ...prof, weights: remapLegacyWeightMap(prof.weights) },
-              )
-            : profilesRaw;
-        const activeProfileId =
-          typeof p.activeProfileId === "string" &&
-          profiles.some((x) => x.id === p.activeProfileId)
-            ? p.activeProfileId
-            : DEFAULT_PROFILE_ID;
-        return {
-          ...current,
-          ...p,
-          profiles,
-          activeProfileId,
-          stockGames: Array.isArray(p.stockGames) ? p.stockGames : current.stockGames,
-          quickRolls: typeof p.quickRolls === "boolean" ? p.quickRolls : current.quickRolls,
-          usedFighterIds: Array.isArray(p.usedFighterIds)
-            ? Array.from({ length: 8 }, (_, i) =>
-                Array.isArray(p.usedFighterIds?.[i])
-                  ? p.usedFighterIds[i].filter((id): id is string => typeof id === "string")
-                  : [],
-              )
-            : current.usedFighterIds,
-          playerProfileIds: Array.from({ length: 8 }, (_, i) => {
-            const existing = Array.isArray(p.playerProfileIds)
-              ? p.playerProfileIds[i]
-              : undefined;
-            if (typeof existing === "string" && existing.length > 0) return existing;
-            return defaultPlayerProfileId(i);
-          }),
-        };
+        try {
+          const p = (persisted ?? {}) as Partial<RandomizerState>;
+          const incoming = Array.isArray(p.profiles)
+            ? p.profiles.filter((x): x is WeightProfile => Boolean(x) && typeof x.id === "string")
+            : current.profiles;
+          const profilesRaw = ensureBuiltInProfiles(incoming);
+          const scale =
+            typeof (p as { weightPresetScale?: unknown }).weightPresetScale === "number"
+              ? (p as { weightPresetScale: number }).weightPresetScale
+              : 2;
+          const profiles =
+            scale < WEIGHT_PRESET_SCALE
+              ? profilesRaw.map((prof) =>
+                  isBuiltInProfileId(prof.id)
+                    ? prof
+                    : { ...prof, weights: remapLegacyWeightMap(prof.weights) },
+                )
+              : profilesRaw;
+          const activeProfileId =
+            typeof p.activeProfileId === "string" &&
+            profiles.some((x) => x.id === p.activeProfileId)
+              ? p.activeProfileId
+              : DEFAULT_PROFILE_ID;
+          return {
+            ...current,
+            ...p,
+            profiles,
+            activeProfileId,
+            stockGames: Array.isArray(p.stockGames) ? p.stockGames : current.stockGames,
+            quickRolls: typeof p.quickRolls === "boolean" ? p.quickRolls : current.quickRolls,
+            usedFighterIds: Array.isArray(p.usedFighterIds)
+              ? Array.from({ length: 8 }, (_, i) =>
+                  Array.isArray(p.usedFighterIds?.[i])
+                    ? p.usedFighterIds[i].filter((id): id is string => typeof id === "string")
+                    : [],
+                )
+              : current.usedFighterIds,
+            playerProfileIds: Array.from({ length: 8 }, (_, i) => {
+              const existing = Array.isArray(p.playerProfileIds)
+                ? p.playerProfileIds[i]
+                : undefined;
+              if (typeof existing === "string" && existing.length > 0) return existing;
+              return defaultPlayerProfileId(i);
+            }),
+          };
+        } catch {
+          return current;
+        }
       },
       partialize: (s) => ({
         profiles: ensureBuiltInProfiles(s.profiles),

@@ -322,10 +322,10 @@
 @keyframes css-pick-pop {
   0%,
   100% {
-    transform: scale(1.08);
+    transform: scale(1.14);
   }
   50% {
-    transform: scale(1.12);
+    transform: scale(1.2);
   }
 }
 
@@ -334,7 +334,7 @@
   overflow: visible;
   outline: 2px solid #facc15;
   outline-offset: 0;
-  transform: scale(1.1);
+  transform: scale(1.16);
   transform-origin: center center;
   will-change: transform;
   animation:
@@ -411,7 +411,7 @@
     animation: none !important;
     outline: 2px solid #facc15;
     box-shadow: 0 0 0 2px rgb(250 204 21 / 0.7);
-    transform: scale(1.1);
+    transform: scale(1.16);
   }
 
   .css-flash-tile .css-flash-wash,

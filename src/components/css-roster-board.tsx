@@ -101,7 +101,7 @@ export function CssRosterBoard({
                     }
                     fighter={fighter}
                     used={usedSet.has(fighter.id) && !liveIds.has(fighter.id) && !zeroSet.has(fighter.id)}
-                    zeroed={zeroSet.has(fighter.id)}
+                    zeroed={zeroSet.has(fighter.id) && !liveIds.has(fighter.id)}
                     highlight={highlightId === fighter.id}
                     pulse={pulse && highlightId === fighter.id}
                     dimmed={dimOthers && !liveIds.has(fighter.id) && !zeroSet.has(fighter.id)}
@@ -288,8 +288,8 @@ function CssTile({
         </div>
       )}
       {zeroed && (
-        <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center bg-black/50">
-          <span className="text-[8px] font-black tabular leading-none text-white sm:text-[10px]" style={{ textShadow: "0 1px 2px #000" }}>
+        <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center bg-black/20">
+          <span className="text-[11px] font-black tabular leading-none text-white sm:text-sm" style={{ textShadow: "0 1px 3px #000" }}>
             0%
           </span>
         </div>

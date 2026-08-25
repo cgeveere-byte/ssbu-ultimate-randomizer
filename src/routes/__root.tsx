@@ -26,7 +26,9 @@ export const Route = createRootRoute({
 
 function PortraitWarmup() {
   useEffect(() => {
-    const kick = () => preloadFighterPortraits();
+    const kick = () => {
+      void preloadFighterPortraits();
+    };
     if (typeof window.requestIdleCallback === "function") {
       const id = window.requestIdleCallback(kick);
       return () => window.cancelIdleCallback(id);

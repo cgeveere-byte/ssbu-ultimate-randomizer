@@ -3,13 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Dices, Images, Maximize2, SlidersHorizontal, Users } from "lucide-react";
 import { Toaster } from "sonner";
 import { ClientOnly } from "@/components/client-only";
+import { SplashGate, SplashScreen } from "@/components/splash-screen";
 import { RandomizerStage } from "@/components/randomizer-stage";
 import { RosterPanel } from "@/components/roster-panel";
 import { HistoryPanel } from "@/components/history-panel";
 import { ProfilesPanel } from "@/components/profiles-panel";
 import { GameMode } from "@/components/game-mode";
 import { GalleryPanel } from "@/components/gallery-panel";
-import { ROSTER } from "@/lib/roster";
+import { ROSTER, portraitPreloadTotal } from "@/lib/roster";
 import { useRandomizerStore } from "@/lib/store";
 import { cn } from "@/lib/cn";
 
@@ -205,45 +206,44 @@ function TabButton({
 
 function Home() {
   return (
-    <div className="min-h-dvh">
-      <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg-elevated">
-              <Dices className="h-5 w-5 text-fg" strokeWidth={1.6} />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold tracking-tight text-fg">
-                Ultimate Randomizer
+    <ClientOnly
+      fallback={<SplashScreen loaded={0} total={portraitPreloadTotal()} />}
+    >
+      <SplashGate>
+        <div className="min-h-dvh">
+          <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur-sm">
+            <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border bg-bg-elevated">
+                  <Dices className="h-5 w-5 text-fg" strokeWidth={1.6} />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold tracking-tight text-fg">
+                    Ultimate Randomizer
+                  </p>
+                  <p className="truncate text-xs text-fg-subtle">
+                    Smash Ultimate · {ROSTER.length} fighters
+                  </p>
+                </div>
+              </div>
+              <p className="hidden text-xs text-fg-subtle sm:block">
+                Profiles saved in this browser
               </p>
-              <p className="truncate text-xs text-fg-subtle">
-                Smash Ultimate · {ROSTER.length} fighters
-              </p>
             </div>
-          </div>
-          <p className="hidden text-xs text-fg-subtle sm:block">
-            Profiles saved in this browser
-          </p>
-        </div>
-      </header>
+          </header>
 
-      <main className="mx-auto flex max-w-7xl flex-col px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
-        <ClientOnly
-          fallback={
-            <div className="flex min-h-[320px] items-center justify-center rounded-[var(--radius-2xl)] border border-border bg-bg-elevated text-sm text-fg-muted">
-              Loading randomizer…
+          <main className="mx-auto flex max-w-7xl flex-col px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+            <AppShell />
+          </main>
+
+          <footer className="border-t border-border py-6">
+            <div className="mx-auto max-w-7xl px-4 text-center text-xs text-fg-subtle sm:px-6">
+              Fan utility — not affiliated with Nintendo. Character names used
+              for identification.
             </div>
-          }
-        >
-          <AppShell />
-        </ClientOnly>
-      </main>
-
-      <footer className="border-t border-border py-6">
-        <div className="mx-auto max-w-7xl px-4 text-center text-xs text-fg-subtle sm:px-6">
-          Fan utility — not affiliated with Nintendo. Character names used for identification.
+          </footer>
         </div>
-      </footer>
-    </div>
+      </SplashGate>
+    </ClientOnly>
   );
 }

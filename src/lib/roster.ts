@@ -532,17 +532,85 @@ export function portraitUrls(): string[] {
 }
 
 const warmImages: HTMLImageElement[] = [];
+let preloadInflight: Promise<void> | null = null;
+let preloadLoaded = 0;
+const preloadListeners = new Set<(loaded: number, total: number) => void>();
 
-/** Download + decode every portrait so the randomizer reel never flashes empty. */
-export function preloadFighterPortraits(): void {
-  if (typeof window === "undefined" || warmImages.length > 0) return;
-  for (const src of portraitUrls()) {
+function notifyPreload(loaded: number, total: number) {
+  preloadLoaded = loaded;
+  for (const fn of preloadListeners) fn(loaded, total);
+}
+
+function loadPortrait(src: string, timeoutMs = 10_000): Promise<void> {
+  return new Promise((resolve) => {
     const img = new Image();
     img.decoding = "async";
+    const finish = () => {
+      img.onload = null;
+      img.onerror = null;
+      resolve();
+    };
+    const t = window.setTimeout(finish, timeoutMs);
+    img.onload = () => {
+      window.clearTimeout(t);
+      void img.decode().then(finish, finish);
+    };
+    img.onerror = () => {
+      window.clearTimeout(t);
+      finish();
+    };
     img.src = src;
-    void img.decode().catch(() => {});
+    if (img.complete && img.naturalWidth > 0) {
+      window.clearTimeout(t);
+      finish();
+    }
     warmImages.push(img);
+  });
+}
+
+/** Download + decode every portrait so the randomizer reel never flashes empty. */
+export function preloadFighterPortraits(
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<void> {
+  const urls = portraitUrls();
+  const total = urls.length;
+  if (typeof window === "undefined") {
+    onProgress?.(total, total);
+    return Promise.resolve();
   }
+
+  if (onProgress) {
+    onProgress(preloadLoaded, total);
+    preloadListeners.add(onProgress);
+  }
+
+  if (!preloadInflight) {
+    if (warmImages.length >= total && preloadLoaded >= total) {
+      notifyPreload(total, total);
+      preloadInflight = Promise.resolve();
+    } else {
+      preloadInflight = (async () => {
+        let loaded = preloadLoaded;
+        notifyPreload(loaded, total);
+        await Promise.all(
+          urls.map((src) =>
+            loadPortrait(src).then(() => {
+              loaded += 1;
+              notifyPreload(loaded, total);
+            }),
+          ),
+        );
+      })();
+    }
+  }
+
+  return preloadInflight.finally(() => {
+    if (onProgress) preloadListeners.delete(onProgress);
+  });
+}
+
+export function portraitPreloadTotal(): number {
+  return portraitUrls().length;
 }
 
 export interface FighterPalette {

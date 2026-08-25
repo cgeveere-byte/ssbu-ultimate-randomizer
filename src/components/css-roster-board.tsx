@@ -50,10 +50,18 @@ export function CssRosterBoard({
           : undefined
       }
     >
-      {rows.map((row, rowIndex) => (
+      {rows.map((row, rowIndex) => {
+        const rowHasPick = Boolean(
+          pulse && highlightId && row.some((f) => f.id === highlightId),
+        );
+        return (
         <ul
           key={rowIndex}
-          className={cn("grid gap-[2px]", fill && "min-h-0 h-full")}
+          className={cn(
+            "grid gap-[2px] overflow-visible",
+            fill && "min-h-0 h-full",
+            rowHasPick && "relative z-20",
+          )}
           style={{ gridTemplateColumns: `repeat(${CSS_COLUMNS}, minmax(0, 1fr))` }}
         >
           {row.length === CSS_COLUMNS
@@ -61,7 +69,10 @@ export function CssRosterBoard({
                 <li
                   key={fighter.id}
                   id={`css-tile-${fighter.id}`}
-                  className={fill ? "min-h-0 h-full" : undefined}
+                  className={cn(
+                    fill && "min-h-0 h-full",
+                    pulse && highlightId === fighter.id && "relative z-30 overflow-visible",
+                  )}
                 >
                   <CssTile
                     key={
@@ -98,7 +109,10 @@ export function CssRosterBoard({
                   <li
                   key={fighter.id}
                   id={`css-tile-${fighter.id}`}
-                  className={fill ? "min-h-0 h-full" : undefined}
+                  className={cn(
+                    fill && "min-h-0 h-full",
+                    pulse && highlightId === fighter.id && "relative z-30 overflow-visible",
+                  )}
                 >
                     <CssTile
                       key={
@@ -121,7 +135,8 @@ export function CssRosterBoard({
                 );
               })}
         </ul>
-      ))}
+        );
+      })}
     </div>
   );
 }

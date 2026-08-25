@@ -319,14 +319,28 @@
   }
 }
 
+@keyframes css-pick-pop {
+  0%,
+  100% {
+    transform: scale(1.08);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
 .css-flash-tile {
-  z-index: 2;
+  z-index: 5;
   overflow: visible;
   outline: 2px solid #facc15;
   outline-offset: 0;
+  transform: scale(1.1);
+  transform-origin: center center;
+  will-change: transform;
   animation:
     css-flash 1.4s ease-out 1,
-    css-flash-pulse 2.6s ease-in-out 1.4s infinite;
+    css-flash-pulse 2.6s ease-in-out 1.4s infinite,
+    css-pick-pop 2.4s ease-in-out infinite;
 }
 
 .css-flash-tile .css-flash-wash {
@@ -397,6 +411,7 @@
     animation: none !important;
     outline: 2px solid #facc15;
     box-shadow: 0 0 0 2px rgb(250 204 21 / 0.7);
+    transform: scale(1.1);
   }
 
   .css-flash-tile .css-flash-wash,

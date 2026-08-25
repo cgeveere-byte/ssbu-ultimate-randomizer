@@ -80,7 +80,11 @@ function AppShell() {
                 <button
                   type="button"
                   onClick={() => setGameMode(true)}
-                  className="flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-border-strong bg-accent px-3 text-xs font-semibold text-accent-fg transition-opacity duration-150 hover:opacity-90"
+                  className="flex h-10 items-center gap-2 rounded-[var(--radius-md)] px-3 text-xs font-semibold text-white shadow-sm transition-opacity duration-150 hover:opacity-90"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(90deg, #ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #ec4899)",
+                  }}
                 >
                   <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
                   Game mode

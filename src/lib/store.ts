@@ -117,7 +117,7 @@ interface RandomizerState {
   isActiveReadOnly: () => boolean;
 
   setActiveProfileId: (id: string) => void;
-  createProfile: (name?: string) => string;
+  createProfile: (name?: string, weights?: WeightMap) => string;
   duplicateProfile: (id: string) => string | null;
   renameProfile: (id: string, name: string) => void;
   deleteProfile: (id: string) => void;
@@ -263,13 +263,13 @@ export const useRandomizerStore = create<RandomizerState>()(
         if (exists) set({ activeProfileId: id });
       },
 
-      createProfile: (name) => {
+      createProfile: (name, weights) => {
         const s = get();
         const finalName = uniqueProfileName(
           name?.trim() || `Profile ${s.profiles.filter((p) => !isBuiltInProfileId(p.id)).length + 1}`,
           s.profiles.map((p) => p.name),
         );
-        const profile = createProfile(finalName, defaultWeights());
+        const profile = createProfile(finalName, weights ?? defaultWeights());
         set({
           profiles: ensureBuiltInProfiles([...s.profiles, profile]),
           activeProfileId: profile.id,

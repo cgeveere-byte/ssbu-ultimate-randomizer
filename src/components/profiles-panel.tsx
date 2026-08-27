@@ -6,6 +6,7 @@ import {
   Pencil,
   Plus,
   RotateCcw,
+  Swords,
   Trash2,
   Check,
   X,
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProfileTransferMenus } from "@/components/profile-transfer-menus";
+import { PreferenceQuiz } from "@/components/preference-quiz";
 import {
   isBuiltInProfileId,
   builtInSubtitle,
@@ -38,6 +40,7 @@ export function ProfilesPanel() {
 
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  const [quizOpen, setQuizOpen] = useState(false);
 
   const active = profiles.find((p) => p.id === activeProfileId) ?? profiles[0];
   const isBuiltIn = isBuiltInProfileId(active.id);
@@ -60,6 +63,7 @@ export function ProfilesPanel() {
   };
 
   return (
+    <>
     <section className="rounded-[var(--radius-xl)] border border-border bg-bg-elevated p-4 sm:p-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -77,6 +81,15 @@ export function ProfilesPanel() {
           >
             <Plus className="h-3.5 w-3.5" />
             New
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={isSpinning}
+            onClick={() => setQuizOpen(true)}
+          >
+            <Swords className="h-3.5 w-3.5" />
+            Quiz
           </Button>
           <ProfileTransferMenus
             profiles={profiles}
@@ -265,5 +278,7 @@ export function ProfilesPanel() {
         </Button>
       </div>
     </section>
+    {quizOpen && <PreferenceQuiz onClose={() => setQuizOpen(false)} />}
+    </>
   );
 }

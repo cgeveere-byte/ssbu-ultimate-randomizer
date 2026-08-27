@@ -77,9 +77,8 @@ function AppShell() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {tab === "randomize" && (
-              <>
+          {tab === "randomize" && (
+            <div className="flex flex-wrap items-center gap-2 sm:contents">
                 <button
                   type="button"
                   onClick={() => setGameMode(true)}
@@ -104,9 +103,8 @@ function AppShell() {
                   <span className="truncate font-medium text-fg">{activeName}</span>
                   <span className="shrink-0 text-fg-muted">Edit →</span>
                 </button>
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {tab === "randomize" ? (

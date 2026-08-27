@@ -52,7 +52,7 @@ function AppShell() {
           <div
             role="tablist"
             aria-label="App sections"
-            className="relative inline-flex w-full rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-1 sm:w-auto"
+            className="relative inline-flex h-10 w-full rounded-[var(--radius-md)] border border-border bg-bg-elevated sm:w-auto"
           >
             <TabButton
               id="tab-randomize"
@@ -192,7 +192,7 @@ function TabButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "relative flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-md)] px-2.5 text-sm font-medium transition-[color,background-color] duration-150 sm:flex-none sm:min-w-[7.5rem] sm:gap-2 sm:px-4",
+        "relative flex h-full flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-md)] px-2.5 text-sm font-medium transition-[color,background-color] duration-150 sm:flex-none sm:min-w-[7.5rem] sm:gap-2 sm:px-4",
         active
           ? "bg-bg-subtle text-fg shadow-[inset_0_0_0_1px_var(--color-border-strong)]"
           : "text-fg-muted hover:text-fg",

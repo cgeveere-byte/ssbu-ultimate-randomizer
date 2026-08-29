@@ -117,7 +117,7 @@ function CssHeroShrink({
       aria-hidden
     >
       {portrait ? (
-        <img src={portrait} alt="" draggable={false} className="h-full w-full object-cover object-center" />
+        <img src={portrait} alt="" draggable={false} className="portrait-eyes h-full w-full" />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-7xl font-semibold tracking-tight text-fg" style={tile}>
           {initials(name)}
@@ -329,7 +329,7 @@ export function FaceOffHalf({
       {pick ? (
         <div key={revealed ? `final-${pick.fighter.id}` : `reel-${reelKey}-${playerIndex}`} className={cn("absolute inset-0", isSpinning && "animate-reel", revealed && "animate-result-in")}>
           {portrait ? (
-            <img src={portrait} alt="" draggable={false} className="h-full w-full object-cover object-center" />
+            <img src={portrait} alt="" draggable={false} className="portrait-eyes h-full w-full" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-7xl font-semibold tracking-tight text-fg" style={tile} aria-hidden>
               {initials(pick.fighter.name)}

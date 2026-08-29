@@ -213,7 +213,7 @@ function CssTile({
           alt={fighter.name}
           draggable={false}
           className={cn(
-            "h-full w-full object-cover object-center transition-[filter,opacity] duration-300",
+            "portrait-eyes h-full w-full transition-[filter,opacity] duration-300",
             used && "grayscale opacity-40",
             zeroed && "grayscale opacity-50",
             !used && !zeroed && dimmed && "saturate-[.4] brightness-[.82] contrast-[.95]",

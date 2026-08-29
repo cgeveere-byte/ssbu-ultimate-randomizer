@@ -73,6 +73,16 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+
+  /**
+   * Shared bust focal point. Square tiles don't crop, so this is a no-op.
+   * Wide CSS tiles (fill / landscape Face-Off) crop vertically — 22% from the
+   * top keeps eyes in frame instead of the mouth/chest. One knob for all 86.
+   */
+  .portrait-eyes {
+    object-fit: cover;
+    object-position: 50% 22%;
+  }
 }
 
 @keyframes reel-blur {

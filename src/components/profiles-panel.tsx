@@ -10,6 +10,7 @@ import {
   Trash2,
   Check,
   X,
+  Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ export function ProfilesPanel() {
   const deleteProfile = useRandomizerStore((s) => s.deleteProfile);
   const importProfiles = useRandomizerStore((s) => s.importProfiles);
   const resetAllData = useRandomizerStore((s) => s.resetAllData);
+  const setAllWeightPresets = useRandomizerStore((s) => s.setAllWeightPresets);
   const isSpinning = useRandomizerStore((s) => s.isSpinning);
 
   const [renaming, setRenaming] = useState(false);
@@ -200,6 +202,20 @@ export function ProfilesPanel() {
                 <Copy className="h-3.5 w-3.5" />
                 Duplicate
               </Button>
+              {!isBuiltIn && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={isSpinning}
+                  onClick={() => {
+                    setAllWeightPresets("never", (f) => !!f.echo);
+                    toast.success("Echo fighters set to 0% — tweak any of them below");
+                  }}
+                >
+                  <Ban className="h-3.5 w-3.5" />
+                  Ban echoes
+                </Button>
+              )}
               {!isBuiltIn && (
                 <Button
                   size="sm"

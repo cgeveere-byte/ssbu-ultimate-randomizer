@@ -282,6 +282,14 @@ export function RosterPanel() {
           >
             Ban Miis
           </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={locked}
+            onClick={() => setAllWeightPresets("never", (f) => !!f.echo)}
+          >
+            Ban echoes
+          </Button>
           <Button size="sm" variant="ghost" disabled={isSpinning} onClick={cycleSort}>
             {sortMode === "number" ? (
               <Hash className="h-3.5 w-3.5" />

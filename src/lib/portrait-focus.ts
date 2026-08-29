@@ -28,7 +28,6 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   jigglypuff: 54,
   peach: 58,
   daisy: 53,
-  bowser: 45,
   "ice-climbers": 51,
   sheik: 52,
   zelda: 39,
@@ -48,7 +47,6 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   "dark-pit": 55,
   "zero-suit-samus": 39,
   wario: 42,
-  snake: 39,
   ike: 47,
   "pokemon-trainer": 36,
   lucas: 45,
@@ -101,6 +99,7 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
  * tweaks for that fighter are discarded.
  */
 export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {
+  bowser: 2,
   "diddy-kong": 2,
   ken: 3,
   "king-dedede": 2,
@@ -108,6 +107,7 @@ export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {
   kirby: 2,
   "little-mac": 2,
   ryu: 2,
+  snake: 2,
   terry: 2,
   yoshi: 2,
 };

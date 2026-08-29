@@ -1,21 +1,46 @@
 import { useMemo, useState } from "react";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 import { type Fighter, ROSTER, fighterPortraitUrl, fighterTileStyle, initials } from "@/lib/roster";
 import { CssRosterBoard } from "@/components/css-roster-board";
 import {
-  DEFAULT_PORTRAIT_FOCUS_Y,
+  formatPortraitFocusDump,
+  getPortraitFocusOverrides,
+  hasCustomPortraitFocus,
   portraitObjectPosition,
   resetPortraitFocusY,
   setPortraitFocusY,
+  usePortraitFocusEpoch,
   usePortraitFocusY,
 } from "@/lib/portrait-focus";
 import { cn } from "@/lib/cn";
 
 type GallerySort = "css" | "name";
 
+async function copyText(label: string, text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success(`${label} copied`);
+  } catch {
+    toast.error("Couldn’t copy — select the dump below instead");
+  }
+}
+
+function setYFromPointer(id: string, el: HTMLElement, clientY: number) {
+  const rect = el.getBoundingClientRect();
+  if (rect.height <= 0) return;
+  const pct = ((clientY - rect.top) / rect.height) * 100;
+  setPortraitFocusY(id, pct);
+}
+
 function EyeLineEditor({ fighter }: { fighter: Fighter }) {
   const y = usePortraitFocusY(fighter.id);
+  const epoch = usePortraitFocusEpoch();
   const src = fighterPortraitUrl(fighter.id);
-  const custom = y !== DEFAULT_PORTRAIT_FOCUS_Y;
+  const custom = hasCustomPortraitFocus(fighter.id);
+  const overrides = useMemo(() => getPortraitFocusOverrides(), [epoch]);
+  const overrideCount = Object.keys(overrides).length;
+  const dump = useMemo(() => formatPortraitFocusDump(), [epoch]);
 
   return (
     <section className="sticky top-2 z-20 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-[var(--shadow-soft)] sm:p-4">
@@ -23,7 +48,8 @@ function EyeLineEditor({ fighter }: { fighter: Fighter }) {
         <div className="min-w-0">
           <p className="text-sm font-semibold tracking-tight text-fg">{fighter.name}</p>
           <p className="mt-0.5 text-xs text-fg-muted">
-            Eye line for wide CSS tiles. Doesn’t edit the picture — only the crop.
+            Drag the line onto the eyes. 0% is the top of the art, 100% the bottom.
+            Wide CSS tiles lock that point in the middle of the crop.
           </p>
         </div>
         <button
@@ -35,43 +61,123 @@ function EyeLineEditor({ fighter }: { fighter: Fighter }) {
           Reset
         </button>
       </div>
-      <div className="mt-3 overflow-hidden rounded-[var(--radius-md)] border border-border bg-black">
-        <div className="relative aspect-[2.4/1] w-full">
-          {src ? (
-            <img
-              src={src}
-              alt=""
-              draggable={false}
-              className="portrait-eyes h-full w-full"
-              style={{ objectPosition: portraitObjectPosition(fighter.id) }}
-            />
-          ) : (
+
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+        <div className="flex shrink-0 items-stretch gap-2">
+          <div
+            className="relative aspect-square w-36 cursor-ns-resize touch-none overflow-hidden rounded-[var(--radius-md)] border border-border bg-black select-none sm:w-44"
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setYFromPointer(fighter.id, e.currentTarget, e.clientY);
+            }}
+            onPointerMove={(e) => {
+              if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+              setYFromPointer(fighter.id, e.currentTarget, e.clientY);
+            }}
+          >
+            {src ? (
+              <img
+                src={src}
+                alt=""
+                draggable={false}
+                className="pointer-events-none h-full w-full object-cover object-center"
+              />
+            ) : (
+              <div
+                className="flex h-full w-full items-center justify-center text-fg"
+                style={fighterTileStyle(fighter.id)}
+              >
+                {initials(fighter.name)}
+              </div>
+            )}
             <div
-              className="flex h-full w-full items-center justify-center text-fg"
-              style={fighterTileStyle(fighter.id)}
+              className="pointer-events-none absolute inset-x-0 z-10"
+              style={{ top: `${y}%` }}
             >
-              {initials(fighter.name)}
+              <div className="h-0.5 w-full bg-amber-300 shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" />
+              <p className="absolute right-1 top-1 -translate-y-full rounded bg-black/70 px-1 text-[10px] font-medium tabular text-amber-200">
+                {y}%
+              </p>
             </div>
-          )}
+          </div>
+
+          <label className="flex flex-col items-center justify-between py-0.5">
+            <span className="text-[10px] uppercase tracking-wide text-fg-subtle">Face</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={y}
+              onChange={(e) => setPortraitFocusY(fighter.id, Number(e.target.value))}
+              className="portrait-focus-y"
+              aria-label={`Eye line for ${fighter.name}`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={y}
+              aria-valuetext={`${y} percent from the top`}
+            />
+            <span className="tabular text-[11px] font-medium text-fg-muted">{y}%</span>
+            <span className="text-[10px] uppercase tracking-wide text-fg-subtle">Chest</span>
+          </label>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-fg-subtle">
+            Wide CSS crop
+          </p>
+          <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-black">
+            <div className="relative aspect-[2.4/1] w-full">
+              {src ? (
+                <img
+                  src={src}
+                  alt=""
+                  draggable={false}
+                  className="portrait-eyes h-full w-full"
+                  style={{ objectPosition: portraitObjectPosition(fighter.id) }}
+                />
+              ) : (
+                <div
+                  className="flex h-full w-full items-center justify-center text-fg"
+                  style={fighterTileStyle(fighter.id)}
+                >
+                  {initials(fighter.name)}
+                </div>
+              )}
+              <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-amber-300/80" />
+            </div>
+          </div>
         </div>
       </div>
-      <label className="mt-3 flex flex-col gap-1.5">
-        <span className="flex items-center justify-between text-[11px] text-fg-subtle">
-          <span>More face</span>
-          <span className="tabular font-medium text-fg-muted">{y}%</span>
-          <span>More chest</span>
-        </span>
-        <input
-          type="range"
-          min={0}
-          max={50}
-          step={1}
-          value={y}
-          onChange={(e) => setPortraitFocusY(fighter.id, Number(e.target.value))}
-          className="w-full accent-amber-300"
-          aria-label={`Eye line for ${fighter.name}`}
-        />
-      </label>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => copyText(`${fighter.name} eye line`, `${fighter.id} ${y}`)}
+          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border border-border px-2.5 text-xs font-medium text-fg-muted hover:text-fg"
+        >
+          <Copy className="h-3.5 w-3.5" />
+          Copy this
+        </button>
+        <button
+          type="button"
+          disabled={overrideCount === 0}
+          onClick={() => copyText("Eye lines", dump)}
+          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border border-border px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
+        >
+          <Copy className="h-3.5 w-3.5" />
+          Copy all{overrideCount ? ` (${overrideCount})` : ""}
+        </button>
+        <p className="text-[11px] text-fg-subtle">
+          Paste the dump in chat later to hard-code these.
+        </p>
+      </div>
+
+      {overrideCount > 0 ? (
+        <pre className="mt-2 max-h-28 overflow-auto rounded-[var(--radius-md)] border border-border bg-bg px-2.5 py-2 font-mono text-[11px] leading-relaxed text-fg-muted">
+          {dump}
+        </pre>
+      ) : null}
     </section>
   );
 }

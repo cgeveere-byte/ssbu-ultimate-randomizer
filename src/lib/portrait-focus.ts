@@ -4,9 +4,10 @@ const STORAGE_KEY = "ssbu-portrait-focus";
 /** Default eye line for bust shots. Lower = more forehead; higher = more chest. */
 export const DEFAULT_PORTRAIT_FOCUS_Y = 22;
 const MIN_Y = 0;
-const MAX_Y = 50;
+const MAX_Y = 100;
 
 let map: Record<string, number> = {};
+let epoch = 0;
 const listeners = new Set<() => void>();
 
 function clampY(y: number): number {
@@ -34,6 +35,7 @@ if (typeof window !== "undefined") {
 }
 
 function emit() {
+  epoch += 1;
   listeners.forEach((fn) => fn());
 }
 
@@ -73,17 +75,40 @@ export function hasCustomPortraitFocus(id: string): boolean {
   return id in map;
 }
 
+export function getPortraitFocusOverrides(): Record<string, number> {
+  return { ...map };
+}
+
+/** Pasteable dump for hard-coding later. Only custom (non-default) eye lines. */
+export function formatPortraitFocusDump(): string {
+  const ids = Object.keys(map).sort();
+  const json: Record<string, number> = {};
+  const lines: string[] = ["ssbu-portrait-focus"];
+  for (const id of ids) {
+    json[id] = map[id];
+    lines.push(`${id} ${map[id]}`);
+  }
+  lines.push(JSON.stringify(json));
+  return lines.join("\n");
+}
+
 export function portraitObjectPosition(id: string): string {
   return `50% ${getPortraitFocusY(id)}%`;
 }
 
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
 export function usePortraitFocusY(id: string): number {
   return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => listeners.delete(cb);
-    },
+    subscribe,
     () => getPortraitFocusY(id),
     () => DEFAULT_PORTRAIT_FOCUS_Y,
   );
+}
+
+export function usePortraitFocusEpoch(): number {
+  return useSyncExternalStore(subscribe, () => epoch, () => 0);
 }

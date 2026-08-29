@@ -77,11 +77,27 @@
   /**
    * Shared bust focal point. Square tiles don't crop, so this is a no-op.
    * Wide CSS tiles (fill / landscape Face-Off) crop vertically — 22% from the
-   * top keeps eyes in frame instead of the mouth/chest. One knob for all 86.
+   * top keeps eyes in frame instead of the mouth/chest. Per-fighter overrides
+   * live in localStorage (`ssbu-portrait-focus`) and win via inline style.
    */
   .portrait-eyes {
     object-fit: cover;
     object-position: 50% 22%;
+  }
+
+  /** Native range, vertical: 0% (face) at the top, 100% (chest) at the bottom. */
+  .portrait-focus-y {
+    writing-mode: vertical-lr;
+    direction: ltr;
+    appearance: slider-vertical;
+    -webkit-appearance: slider-vertical;
+    width: 1.75rem;
+    height: 100%;
+    min-height: 9rem;
+    margin: 0;
+    padding: 0;
+    accent-color: #fcd34d;
+    cursor: ns-resize;
   }
 }
 

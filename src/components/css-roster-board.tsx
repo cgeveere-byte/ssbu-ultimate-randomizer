@@ -90,7 +90,7 @@ export function CssRosterBoard({
                   key={fighter.id}
                   id={`css-tile-${fighter.id}`}
                   className={cn(
-                    fill && "min-h-0 h-full",
+                    fill ? "min-h-0 h-full" : "aspect-square",
                     pulse && highlightId === fighter.id && "relative z-50 overflow-visible",
                   )}
                 >
@@ -129,7 +129,7 @@ export function CssRosterBoard({
                   key={fighter.id}
                   id={`css-tile-${fighter.id}`}
                   className={cn(
-                    fill && "min-h-0 h-full",
+                    fill ? "min-h-0 h-full" : "aspect-square",
                     pulse && highlightId === fighter.id && "relative z-50 overflow-visible",
                   )}
                 >
@@ -199,8 +199,8 @@ function CssTile({
       type={onSelect ? "button" : undefined}
       onClick={onSelect ? () => onSelect(fighter.id) : undefined}
       className={cn(
-        "relative overflow-hidden rounded-[2px] bg-bg-elevated",
-        fill ? "h-full w-full" : "aspect-square",
+        "relative block overflow-hidden rounded-[2px] bg-bg-elevated p-0",
+        fill ? "h-full w-full" : "aspect-square w-full",
         highlight && !pulse && "z-[1] outline outline-2 outline-offset-[-1px] outline-white",
         pulse && "css-flash-tile",
         onSelect && "cursor-pointer transition-transform hover:z-[1] hover:brightness-110 active:scale-95",

@@ -53,10 +53,8 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   snake: 39,
   ike: 47,
   "pokemon-trainer": 36,
-  "diddy-kong": 58,
   lucas: 45,
   sonic: 36,
-  "king-dedede": 48,
   olimar: 37,
   lucario: 53,
   rob: 40,
@@ -109,6 +107,8 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
  * tweaks for that fighter are discarded.
  */
 export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {
+  "diddy-kong": 2,
+  "king-dedede": 2,
   "king-k-rool": 2,
 };
 

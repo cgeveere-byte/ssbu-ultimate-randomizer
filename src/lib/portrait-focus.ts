@@ -86,6 +86,7 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   ridley: 38,
   simon: 31,
   richter: 26,
+  "king-k-rool": 39,
   isabelle: 41,
   incineroar: 37,
   "piranha-plant": 51,

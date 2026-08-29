@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Copy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { type Fighter, ROSTER, fighterPortraitUrl, fighterTileStyle, initials } from "@/lib/roster";
 import { CssRosterBoard } from "@/components/css-roster-board";
@@ -15,7 +15,13 @@ import {
 } from "@/lib/portrait-focus";
 import { cn } from "@/lib/cn";
 
-type GallerySort = "css" | "name";
+type GalleryTab = "css" | "name" | "eyes";
+
+const TABS: { id: GalleryTab; label: string }[] = [
+  { id: "css", label: "CSS" },
+  { id: "name", label: "A–Z" },
+  { id: "eyes", label: "Eye line" },
+];
 
 async function copyText(label: string, text: string) {
   try {
@@ -33,7 +39,19 @@ function setYFromPointer(id: string, el: HTMLElement, clientY: number) {
   setPortraitFocusY(id, pct);
 }
 
-function EyeLineEditor({ fighter }: { fighter: Fighter }) {
+function EyeLineEditor({
+  fighter,
+  index,
+  total,
+  onPrev,
+  onNext,
+}: {
+  fighter: Fighter;
+  index: number;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
   const y = usePortraitFocusY(fighter.id);
   const epoch = usePortraitFocusEpoch();
   const src = fighterPortraitUrl(fighter.id);
@@ -44,7 +62,29 @@ function EyeLineEditor({ fighter }: { fighter: Fighter }) {
 
   return (
     <section className="sticky top-2 z-20 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-[var(--shadow-soft)] sm:p-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          className="inline-flex h-10 shrink-0 items-center gap-1 rounded-[var(--radius-md)] border border-border px-2.5 text-xs font-medium text-fg-muted hover:text-fg"
+        >
+          <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
+          Previous
+        </button>
+        <p className="min-w-0 flex-1 text-center text-[11px] tabular text-fg-subtle">
+          {index + 1} / {total}
+        </p>
+        <button
+          type="button"
+          onClick={onNext}
+          className="inline-flex h-10 shrink-0 items-center gap-1 rounded-[var(--radius-md)] border border-border px-2.5 text-xs font-medium text-fg-muted hover:text-fg"
+        >
+          Next
+          <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
+        </button>
+      </div>
+
+      <div className="mt-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold tracking-tight text-fg">{fighter.name}</p>
           <p className="mt-0.5 text-xs text-fg-muted">
@@ -234,15 +274,33 @@ function PortraitTile({
   );
 }
 
+function galleryBlurb(tab: GalleryTab): string {
+  if (tab === "css") return `All ${ROSTER.length} fighters in character-select order. Tap one to edit its eye line.`;
+  if (tab === "name") return `All ${ROSTER.length} fighters — A–Z. Tap one to edit its eye line.`;
+  return "Set each fighter’s CSS crop. Previous / Next walk the roster in CSS order.";
+}
+
 export function GalleryPanel() {
-  const [sort, setSort] = useState<GallerySort>("css");
-  const [focusId, setFocusId] = useState<string | null>(null);
+  const [tab, setTab] = useState<GalleryTab>("css");
+  const [focusId, setFocusId] = useState<string>(ROSTER[0]?.id ?? "mario");
   const [pulseKey, setPulseKey] = useState(0);
 
   const azFighters = useMemo(() => {
     return ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name, "en"));
   }, []);
-  const focused = focusId ? ROSTER.find((f) => f.id === focusId) : undefined;
+  const focusIndex = Math.max(0, ROSTER.findIndex((f) => f.id === focusId));
+  const focused = ROSTER[focusIndex] ?? ROSTER[0];
+
+  const openEyes = (id: string) => {
+    setFocusId(id);
+    setPulseKey((k) => k + 1);
+    setTab("eyes");
+  };
+
+  const stepFighter = (dir: -1 | 1) => {
+    const next = (focusIndex + dir + ROSTER.length) % ROSTER.length;
+    setFocusId(ROSTER[next].id);
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -251,54 +309,68 @@ export function GalleryPanel() {
           <h1 className="text-xl font-semibold tracking-tight text-fg sm:text-2xl">
             Gallery
           </h1>
-          <p className="mt-1 text-sm text-fg-muted">
-            All {ROSTER.length} fighters
-            {sort === "css" ? " in character-select order." : " — A–Z."} Tap one to set its CSS eye line.
-          </p>
+          <p className="mt-1 text-sm text-fg-muted">{galleryBlurb(tab)}</p>
         </div>
 
         <div
           role="radiogroup"
-          aria-label="Sort gallery"
+          aria-label="Gallery view"
           className="inline-flex h-11 shrink-0 overflow-hidden rounded-[var(--radius-lg)] border border-border-strong bg-bg p-0.5"
         >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={sort === "css"}
-            onClick={() => setSort("css")}
-            className={cn(
-              "flex items-center justify-center px-3 text-xs font-semibold transition-colors sm:px-3.5",
-              sort === "css"
-                ? "rounded-[calc(var(--radius-lg)-2px)] bg-accent text-accent-fg"
-                : "text-fg-muted hover:text-fg",
-            )}
-          >
-            CSS
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={sort === "name"}
-            onClick={() => setSort("name")}
-            className={cn(
-              "flex items-center justify-center px-3 text-xs font-semibold transition-colors sm:px-3.5",
-              sort === "name"
-                ? "rounded-[calc(var(--radius-lg)-2px)] bg-accent text-accent-fg"
-                : "text-fg-muted hover:text-fg",
-            )}
-          >
-            A–Z
-          </button>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "flex items-center justify-center px-3 text-xs font-semibold transition-colors sm:px-3.5",
+                tab === t.id
+                  ? "rounded-[calc(var(--radius-lg)-2px)] bg-accent text-accent-fg"
+                  : "text-fg-muted hover:text-fg",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {focused ? <EyeLineEditor fighter={focused} /> : null}
+      {tab === "eyes" && focused ? (
+        <EyeLineEditor
+          fighter={focused}
+          index={focusIndex}
+          total={ROSTER.length}
+          onPrev={() => stepFighter(-1)}
+          onNext={() => stepFighter(1)}
+        />
+      ) : null}
 
-      {sort === "css" ? (
+      {tab === "css" ? (
         <CssRosterBoard
           className="overflow-hidden rounded-[var(--radius-lg)]"
           highlightId={focusId}
+          pulse
+          pulseKey={pulseKey}
+          onSelect={openEyes}
+        />
+      ) : tab === "name" ? (
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {azFighters.map((fighter) => (
+            <li key={fighter.id}>
+              <PortraitTile
+                fighter={fighter}
+                focused={focusId === fighter.id}
+                onSelect={() => openEyes(fighter.id)}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <CssRosterBoard
+          className="overflow-hidden rounded-[var(--radius-lg)]"
+          highlightId={focused?.id}
           pulse
           pulseKey={pulseKey}
           onSelect={(id) => {
@@ -306,20 +378,6 @@ export function GalleryPanel() {
             setPulseKey((k) => k + 1);
           }}
         />
-      ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {azFighters.map((fighter) => (
-            <li key={fighter.id}>
-              <PortraitTile
-                fighter={fighter}
-                focused={focusId === fighter.id}
-                onSelect={() => {
-                  setFocusId(fighter.id);
-                }}
-              />
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   );

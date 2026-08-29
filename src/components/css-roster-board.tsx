@@ -6,7 +6,7 @@ import {
   fighterTileStyle,
   initials,
 } from "@/lib/roster";
-import { usePortraitFocusY } from "@/lib/portrait-focus";
+import { PortraitFocal } from "@/components/portrait-img";
 import { cn } from "@/lib/cn";
 import { useMemo } from "react";
 
@@ -184,7 +184,6 @@ function CssTile({
 }) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
-  const focusY = usePortraitFocusY(fighter.id);
   const title = zeroed
     ? `${fighter.name} · 0%`
     : used
@@ -210,18 +209,17 @@ function CssTile({
       aria-label={onSelect ? fighter.name : undefined}
     >
       {src ? (
-        <img
+        <PortraitFocal
+          fighterId={fighter.id}
           src={src}
           alt={fighter.name}
-          draggable={false}
-          className={cn(
-            "portrait-eyes h-full w-full transition-[filter,opacity] duration-300",
+          imgClassName={cn(
+            "transition-[filter,opacity] duration-300",
             used && "grayscale opacity-40",
             zeroed && "grayscale opacity-50",
             !used && !zeroed && dimmed && "saturate-[.4] brightness-[.82] contrast-[.95]",
             (highlight || pulse || marked) && "brightness-110",
           )}
-          style={{ objectPosition: `50% ${focusY}%` }}
         />
       ) : (
         <div

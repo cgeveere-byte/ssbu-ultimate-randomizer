@@ -19,7 +19,7 @@ import { isBuiltInProfileId } from "@/lib/profiles";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
 import { type PlayerPick, useRandomizerStore } from "@/lib/store";
 import { STOCKS_PER_GAME } from "@/lib/stock-session";
-import { portraitObjectPosition, usePortraitFocusY } from "@/lib/portrait-focus";
+import { PortraitFocal } from "@/components/portrait-img";
 import { cn } from "@/lib/cn";
 
 const PREF_STEP = 0.5;
@@ -60,7 +60,6 @@ function CssHeroShrink({
   onDoneRef.current = onDone;
   const portrait = fighterPortraitUrl(fighterId);
   const tile = fighterTileStyle(fighterId);
-  usePortraitFocusY(fighterId);
 
   useEffect(() => {
     const overlay = overlayRef.current;
@@ -119,13 +118,7 @@ function CssHeroShrink({
       aria-hidden
     >
       {portrait ? (
-        <img
-          src={portrait}
-          alt=""
-          draggable={false}
-          className="portrait-eyes h-full w-full"
-          style={{ objectPosition: portraitObjectPosition(fighterId) }}
-        />
+        <PortraitFocal fighterId={fighterId} src={portrait} />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-7xl font-semibold tracking-tight text-fg" style={tile}>
           {initials(name)}
@@ -219,7 +212,6 @@ export function FaceOffHalf({
   const atMax = weight >= PREF_MAX;
   const portrait = pick ? fighterPortraitUrl(pick.fighter.id) : null;
   const tile = pick ? fighterTileStyle(pick.fighter.id) : undefined;
-  usePortraitFocusY(pick?.fighter.id ?? "");
   const usedSet = useMemo(() => new Set(usedIds), [usedIds]);
   const zeroIds = useMemo(() => {
     const s = new Set<string>();
@@ -338,13 +330,7 @@ export function FaceOffHalf({
       {pick ? (
         <div key={revealed ? `final-${pick.fighter.id}` : `reel-${reelKey}-${playerIndex}`} className={cn("absolute inset-0", isSpinning && "animate-reel", revealed && "animate-result-in")}>
           {portrait ? (
-            <img
-              src={portrait}
-              alt=""
-              draggable={false}
-              className="portrait-eyes h-full w-full"
-              style={{ objectPosition: portraitObjectPosition(pick.fighter.id) }}
-            />
+            <PortraitFocal fighterId={pick.fighter.id} src={portrait} />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-7xl font-semibold tracking-tight text-fg" style={tile} aria-hidden>
               {initials(pick.fighter.name)}

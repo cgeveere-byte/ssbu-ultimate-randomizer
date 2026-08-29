@@ -92,10 +92,6 @@ export function formatPortraitFocusDump(): string {
   return lines.join("\n");
 }
 
-export function portraitObjectPosition(id: string): string {
-  return `50% ${getPortraitFocusY(id)}%`;
-}
-
 function subscribe(cb: () => void) {
   listeners.add(cb);
   return () => listeners.delete(cb);

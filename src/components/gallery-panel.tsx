@@ -3,11 +3,11 @@ import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { type Fighter, ROSTER, fighterPortraitUrl, fighterTileStyle, initials } from "@/lib/roster";
 import { CssRosterBoard } from "@/components/css-roster-board";
+import { PortraitFocal } from "@/components/portrait-img";
 import {
   formatPortraitFocusDump,
   getPortraitFocusOverrides,
   hasCustomPortraitFocus,
-  portraitObjectPosition,
   resetPortraitFocusY,
   setPortraitFocusY,
   usePortraitFocusEpoch,
@@ -88,8 +88,9 @@ function EyeLineEditor({
         <div className="min-w-0">
           <p className="text-sm font-semibold tracking-tight text-fg">{fighter.name}</p>
           <p className="mt-0.5 text-xs text-fg-muted">
-            Drag the line onto the eyes. 0% is the top of the art, 100% the bottom.
-            Wide CSS tiles lock that point in the middle of the crop.
+            Left is the artwork — put the gold line on the eyes. The right preview
+            is the real wide CSS crop; that line is the middle of the tile, where
+            the eye line is locked.
           </p>
         </div>
         <button
@@ -169,13 +170,7 @@ function EyeLineEditor({
           <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-black">
             <div className="relative aspect-[2.4/1] w-full">
               {src ? (
-                <img
-                  src={src}
-                  alt=""
-                  draggable={false}
-                  className="portrait-eyes h-full w-full"
-                  style={{ objectPosition: portraitObjectPosition(fighter.id) }}
-                />
+                <PortraitFocal fighterId={fighter.id} src={src} />
               ) : (
                 <div
                   className="flex h-full w-full items-center justify-center text-fg"
@@ -184,7 +179,7 @@ function EyeLineEditor({
                   {initials(fighter.name)}
                 </div>
               )}
-              <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-amber-300/80" />
+              <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-0.5 -translate-y-1/2 bg-amber-300 shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" />
             </div>
           </div>
         </div>

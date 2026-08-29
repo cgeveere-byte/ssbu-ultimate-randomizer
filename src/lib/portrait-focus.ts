@@ -86,7 +86,6 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   ridley: 38,
   simon: 31,
   richter: 26,
-  "king-k-rool": 41,
   isabelle: 41,
   incineroar: 37,
   "piranha-plant": 51,
@@ -108,7 +107,9 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
  * Bump when `public/portraits/{id}.webp` is replaced so old localStorage
  * tweaks for that fighter are discarded.
  */
-export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {};
+export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {
+  "king-k-rool": 2,
+};
 
 function artGen(id: string): number {
   return PORTRAIT_ART_GEN[id] ?? 1;

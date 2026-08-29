@@ -20,8 +20,6 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   link: 40,
   samus: 39,
   "dark-samus": 39,
-  yoshi: 44,
-  kirby: 65,
   fox: 41,
   pikachu: 54,
   luigi: 46,
@@ -108,8 +106,10 @@ export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {
   "diddy-kong": 2,
   "king-dedede": 2,
   "king-k-rool": 2,
+  kirby: 2,
   "little-mac": 2,
   terry: 2,
+  yoshi: 2,
 };
 
 function artGen(id: string): number {

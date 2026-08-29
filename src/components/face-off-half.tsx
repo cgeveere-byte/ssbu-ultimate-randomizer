@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type MouseEvent } from "react";
 import { Dices, LayoutGrid, Lock, Maximize2, Minus, Plus, Star, X } from "lucide-react";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
@@ -23,6 +23,10 @@ import { cn } from "@/lib/cn";
 
 const PREF_STEP = 0.5;
 const PREF_MAX = 10;
+
+function clickWasOnControl(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest("button, a, input, textarea, select, [role='button']"));
+}
 
 export function FaceOffSettings({
   uniqueOnly,
@@ -148,7 +152,15 @@ export function FaceOffHalf({
 
   if (view === "css") {
     return (
-      <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-black" style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}>
+      <div
+        className="relative flex h-full min-h-0 w-full cursor-pointer flex-col overflow-hidden bg-black"
+        style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}
+        onClick={(e) => {
+          if (clickWasOnControl(e.target)) return;
+          onToggleView();
+        }}
+        title="Show large portrait"
+      >
         <div className="relative z-10 shrink-0">{topBar}</div>
         <div className="min-h-0 flex-1 px-[2px]">
           <CssRosterBoard
@@ -184,8 +196,18 @@ export function FaceOffHalf({
     );
   }
 
+  const onFaceSurfaceClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (clickWasOnControl(e.target)) return;
+    onToggleView();
+  };
+
   return (
-    <div className="relative h-full min-h-0 w-full overflow-hidden bg-bg" style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}>
+    <div
+      className="relative h-full min-h-0 w-full cursor-pointer overflow-hidden bg-bg"
+      style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}
+      onClick={onFaceSurfaceClick}
+      title="Show character select"
+    >
       {pick ? (
         <div key={revealed ? `final-${pick.fighter.id}` : `reel-${reelKey}-${playerIndex}`} className={cn("absolute inset-0", isSpinning && "animate-reel", revealed && "animate-result-in")}>
           {portrait ? (

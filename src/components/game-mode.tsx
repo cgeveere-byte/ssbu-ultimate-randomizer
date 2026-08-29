@@ -96,6 +96,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
       return pool[Math.floor(Math.random() * pool.length)] ?? final[i].fighter;
     };
     const duration = rollDurationMs(quickRolls); const start = performance.now(); let lastTick = 0;
+    const loud = faceOff ? 3 : 1;
     const tick = (now: number) => {
       const elapsed = now - start; const progress = Math.min(1, elapsed / duration); const interval = 40 + progress * 180;
       if (now - lastTick >= interval) {
@@ -104,18 +105,18 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
         for (let i = 0; i < final.length; i++) {
           flash.push({ fighter: pickFlash(i), profileId: final[i].profileId, profileName: final[i].profileName });
         }
-        setDisplayPicks(flash); setReelKey((k) => k + 1); playRollTick(progress);
+        setDisplayPicks(flash); setReelKey((k) => k + 1); playRollTick(progress, loud);
       }
       if (progress < 1) {
         const id = window.setTimeout(() => { requestAnimationFrame(tick); }, 16);
         timers.current.push(id);
       } else {
-        setDisplayPicks(final); setLastPicks(final); pushHistory(final); commitUsedPicks(final); setRevealed(true); setSpinning(false); playRollLock();
+        setDisplayPicks(final); setLastPicks(final); pushHistory(final); commitUsedPicks(final); setRevealed(true); setSpinning(false); playRollLock(loud);
       }
     };
     setDisplayPicks(Array.from({ length: final.length }, (_, i) => ({ fighter: pickFlash(i), profileId: final[i].profileId, profileName: final[i].profileName })));
     requestAnimationFrame(tick);
-  }, [canRoll, flashPoolFor, isSpinning, pushHistory, commitUsedPicks, quickRolls, roll, saveStockResult, setLastPicks, setSpinning]);
+  }, [canRoll, faceOff, flashPoolFor, isSpinning, pushHistory, commitUsedPicks, quickRolls, roll, saveStockResult, setLastPicks, setSpinning]);
 
   const shown = displayPicks.length > 0 ? displayPicks : lastPicks;
   const cols = Math.min(shown.length || playerCount, 4);

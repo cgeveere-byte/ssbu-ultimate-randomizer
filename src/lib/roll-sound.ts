@@ -59,7 +59,7 @@ export function useRollSfxEnabled(): boolean {
 }
 
 /** Soft slot-style tick. Quieter and lower as the reel slows. */
-export function playRollTick(progress: number): void {
+export function playRollTick(progress: number, intensity = 1): void {
   if (!enabled) return;
   const ac = getCtx();
   if (!ac) return;
@@ -81,8 +81,8 @@ export function playRollTick(progress: number): void {
   filter.frequency.value = 820 - progress * 280 + Math.random() * 40;
   filter.Q.value = 1.8;
   const gain = ac.createGain();
-  const vol = 0.048 * (1 - progress * 0.4);
-  gain.gain.setValueAtTime(Math.max(0.012, vol), t);
+  const vol = 0.048 * intensity * (1 - progress * 0.4);
+  gain.gain.setValueAtTime(Math.max(0.012 * intensity, vol), t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
   src.connect(filter).connect(gain).connect(ac.destination);
   src.start(t);
@@ -90,7 +90,7 @@ export function playRollTick(progress: number): void {
 }
 
 /** Quiet two-note lock-in when the reel stops. */
-export function playRollLock(): void {
+export function playRollLock(intensity = 1): void {
   if (!enabled) return;
   const ac = getCtx();
   if (!ac) return;
@@ -107,8 +107,9 @@ export function playRollLock(): void {
     filter.type = "lowpass";
     filter.frequency.value = 1400;
     const start = t + i * 0.055;
+    const peak = 0.055 * intensity;
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.055, start + 0.018);
+    gain.gain.exponentialRampToValueAtTime(peak, start + 0.018);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.26);
     osc.connect(filter).connect(gain).connect(ac.destination);
     osc.start(start);

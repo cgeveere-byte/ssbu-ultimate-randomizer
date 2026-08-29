@@ -1,4 +1,4 @@
-import { useMemo, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type RefObject } from "react";
 import { Dices, LayoutGrid, Lock, Maximize2, Minus, Plus, Star, X } from "lucide-react";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
@@ -26,6 +26,105 @@ const PREF_MAX = 10;
 
 function clickWasOnControl(target: EventTarget | null): boolean {
   return target instanceof Element && Boolean(target.closest("button, a, input, textarea, select, [role='button']"));
+}
+
+function offsetInAncestor(el: HTMLElement, ancestor: HTMLElement) {
+  let left = 0;
+  let top = 0;
+  let node: HTMLElement | null = el;
+  while (node && node !== ancestor) {
+    left += node.offsetLeft;
+    top += node.offsetTop;
+    const next = node.offsetParent as HTMLElement | null;
+    node = next === ancestor || (next && ancestor.contains(next)) ? next : node.parentElement;
+  }
+  return { left, top, width: el.offsetWidth, height: el.offsetHeight };
+}
+
+function CssHeroShrink({
+  fighterId,
+  name,
+  playKey,
+  containerRef,
+  onDone,
+}: {
+  fighterId: string;
+  name: string;
+  playKey: string;
+  containerRef: RefObject<HTMLDivElement | null>;
+  onDone: () => void;
+}) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  const portrait = fighterPortraitUrl(fighterId);
+  const tile = fighterTileStyle(fighterId);
+
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    const root = containerRef.current;
+    if (!overlay || !root) {
+      onDoneRef.current();
+      return;
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      onDoneRef.current();
+      return;
+    }
+
+    let anim: Animation | null = null;
+    const hold = window.setTimeout(() => {
+      const tileEl = root.querySelector<HTMLElement>(`#css-tile-${fighterId}`);
+      if (!tileEl) {
+        onDoneRef.current();
+        return;
+      }
+      const dest = offsetInAncestor(tileEl, root);
+      overlay.style.right = "auto";
+      overlay.style.bottom = "auto";
+      anim = overlay.animate(
+        [
+          {
+            top: "0px",
+            left: "0px",
+            width: `${root.offsetWidth}px`,
+            height: `${root.offsetHeight}px`,
+            borderRadius: "0px",
+          },
+          {
+            top: `${dest.top}px`,
+            left: `${dest.left}px`,
+            width: `${Math.max(dest.width, 1)}px`,
+            height: `${Math.max(dest.height, 1)}px`,
+            borderRadius: "2px",
+          },
+        ],
+        { duration: 780, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "forwards" },
+      );
+      anim.onfinish = () => onDoneRef.current();
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(hold);
+      anim?.cancel();
+    };
+  }, [containerRef, fighterId, playKey]);
+
+  return (
+    <div
+      ref={overlayRef}
+      className="pointer-events-none absolute top-0 left-0 z-20 h-full w-full overflow-hidden bg-black shadow-[0_8px_40px_rgba(0,0,0,0.55)]"
+      aria-hidden
+    >
+      {portrait ? (
+        <img src={portrait} alt="" draggable={false} className="h-full w-full object-cover object-center" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-7xl font-semibold tracking-tight text-fg" style={tile}>
+          {initials(name)}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function FaceOffSettings({
@@ -89,6 +188,15 @@ export function FaceOffHalf({
   opponentId?: string | null;
 }) {
   const pc = playerColor(playerIndex);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [heroDone, setHeroDone] = useState(true);
+  const heroActive = view === "css" && Boolean(pick) && revealed && !isSpinning;
+  const heroKey = `${reelKey}-${pick?.fighter.id ?? ""}`;
+
+  useEffect(() => {
+    if (heroActive) setHeroDone(false);
+    else setHeroDone(true);
+  }, [heroActive, heroKey]);
   const profiles = useRandomizerStore((s) => s.profiles);
   const nudge = useRandomizerStore((s) => s.nudgePlayerFighterWeight);
   const liveProfileId = useRandomizerStore((s) => s.getPlayerProfileId(playerIndex));
@@ -153,6 +261,7 @@ export function FaceOffHalf({
   if (view === "css") {
     return (
       <div
+        ref={rootRef}
         className="relative flex h-full min-h-0 w-full cursor-pointer flex-col overflow-hidden bg-black"
         style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}
         onClick={(e) => {
@@ -161,13 +270,22 @@ export function FaceOffHalf({
         }}
         title="Show large portrait"
       >
-        <div className="relative z-10 shrink-0">{topBar}</div>
+        {heroActive && pick && !heroDone && (
+          <CssHeroShrink
+            fighterId={pick.fighter.id}
+            name={pick.fighter.name}
+            playKey={heroKey}
+            containerRef={rootRef}
+            onDone={() => setHeroDone(true)}
+          />
+        )}
+        <div className="relative z-30 shrink-0">{topBar}</div>
         <div className="min-h-0 flex-1 px-[2px]">
           <CssRosterBoard
             used={usedSet}
             zeroIds={zeroIds}
             highlightId={pick?.fighter.id ?? null}
-            pulse={Boolean(pick) && revealed && !isSpinning}
+            pulse={Boolean(pick) && revealed && !isSpinning && heroDone}
             pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
             dimOthers={Boolean(pick) && revealed && !isSpinning}
             markId={showFoe ? opponentId ?? null : null}
@@ -177,7 +295,7 @@ export function FaceOffHalf({
             className="h-full"
           />
         </div>
-        <div className="z-10 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
+        <div className="relative z-30 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
           <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
             {pick ? pick.fighter.name : emptyHint}
           </p>

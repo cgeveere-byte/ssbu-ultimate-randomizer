@@ -1,9 +1,80 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { type Fighter, ROSTER, fighterPortraitUrl, fighterTileStyle, initials } from "@/lib/roster";
 import { CssRosterBoard } from "@/components/css-roster-board";
+import {
+  DEFAULT_PORTRAIT_FOCUS_Y,
+  portraitObjectPosition,
+  resetPortraitFocusY,
+  setPortraitFocusY,
+  usePortraitFocusY,
+} from "@/lib/portrait-focus";
 import { cn } from "@/lib/cn";
 
 type GallerySort = "css" | "name";
+
+function EyeLineEditor({ fighter }: { fighter: Fighter }) {
+  const y = usePortraitFocusY(fighter.id);
+  const src = fighterPortraitUrl(fighter.id);
+  const custom = y !== DEFAULT_PORTRAIT_FOCUS_Y;
+
+  return (
+    <section className="sticky top-2 z-20 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-[var(--shadow-soft)] sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold tracking-tight text-fg">{fighter.name}</p>
+          <p className="mt-0.5 text-xs text-fg-muted">
+            Eye line for wide CSS tiles. Doesn’t edit the picture — only the crop.
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={!custom}
+          onClick={() => resetPortraitFocusY(fighter.id)}
+          className="h-9 shrink-0 rounded-[var(--radius-md)] border border-border px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
+        >
+          Reset
+        </button>
+      </div>
+      <div className="mt-3 overflow-hidden rounded-[var(--radius-md)] border border-border bg-black">
+        <div className="relative aspect-[2.4/1] w-full">
+          {src ? (
+            <img
+              src={src}
+              alt=""
+              draggable={false}
+              className="portrait-eyes h-full w-full"
+              style={{ objectPosition: portraitObjectPosition(fighter.id) }}
+            />
+          ) : (
+            <div
+              className="flex h-full w-full items-center justify-center text-fg"
+              style={fighterTileStyle(fighter.id)}
+            >
+              {initials(fighter.name)}
+            </div>
+          )}
+        </div>
+      </div>
+      <label className="mt-3 flex flex-col gap-1.5">
+        <span className="flex items-center justify-between text-[11px] text-fg-subtle">
+          <span>More face</span>
+          <span className="tabular font-medium text-fg-muted">{y}%</span>
+          <span>More chest</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={50}
+          step={1}
+          value={y}
+          onChange={(e) => setPortraitFocusY(fighter.id, Number(e.target.value))}
+          className="w-full accent-amber-300"
+          aria-label={`Eye line for ${fighter.name}`}
+        />
+      </label>
+    </section>
+  );
+}
 
 function PortraitTile({
   fighter,
@@ -65,13 +136,7 @@ export function GalleryPanel() {
   const azFighters = useMemo(() => {
     return ROSTER.slice().sort((a, b) => a.name.localeCompare(b.name, "en"));
   }, []);
-
-  useEffect(() => {
-    if (!focusId) return;
-    const id = sort === "name" ? `gallery-${focusId}` : `css-tile-${focusId}`;
-    const el = document.getElementById(id);
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [sort, focusId]);
+  const focused = focusId ? ROSTER.find((f) => f.id === focusId) : undefined;
 
   return (
     <div className="flex flex-col gap-5">
@@ -82,7 +147,7 @@ export function GalleryPanel() {
           </h1>
           <p className="mt-1 text-sm text-fg-muted">
             All {ROSTER.length} fighters
-            {sort === "css" ? " in character-select order." : " — A–Z."}
+            {sort === "css" ? " in character-select order." : " — A–Z."} Tap one to set its CSS eye line.
           </p>
         </div>
 
@@ -122,6 +187,8 @@ export function GalleryPanel() {
         </div>
       </div>
 
+      {focused ? <EyeLineEditor fighter={focused} /> : null}
+
       {sort === "css" ? (
         <CssRosterBoard
           className="overflow-hidden rounded-[var(--radius-lg)]"
@@ -130,7 +197,7 @@ export function GalleryPanel() {
           pulseKey={pulseKey}
           onSelect={(id) => {
             setFocusId(id);
-            setSort("name");
+            setPulseKey((k) => k + 1);
           }}
         />
       ) : (
@@ -142,8 +209,6 @@ export function GalleryPanel() {
                 focused={focusId === fighter.id}
                 onSelect={() => {
                   setFocusId(fighter.id);
-                  setPulseKey((k) => k + 1);
-                  setSort("css");
                 }}
               />
             </li>

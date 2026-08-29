@@ -6,6 +6,7 @@ import {
   fighterTileStyle,
   initials,
 } from "@/lib/roster";
+import { usePortraitFocusY } from "@/lib/portrait-focus";
 import { cn } from "@/lib/cn";
 import { useMemo } from "react";
 
@@ -183,6 +184,7 @@ function CssTile({
 }) {
   const src = fighterPortraitUrl(fighter.id);
   const tile = fighterTileStyle(fighter.id);
+  const focusY = usePortraitFocusY(fighter.id);
   const title = zeroed
     ? `${fighter.name} · 0%`
     : used
@@ -219,6 +221,7 @@ function CssTile({
             !used && !zeroed && dimmed && "saturate-[.4] brightness-[.82] contrast-[.95]",
             (highlight || pulse || marked) && "brightness-110",
           )}
+          style={{ objectPosition: `50% ${focusY}%` }}
         />
       ) : (
         <div

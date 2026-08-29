@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth/provider";
+import { CloudSync } from "@/components/cloud-sync";
 import { portraitUrls, preloadFighterPortraits } from "@/lib/roster";
 
 export const Route = createRootRoute({
@@ -68,6 +69,7 @@ function RootDocument() {
       <body>
         <PortraitWarmup />
         <AuthProvider>
+          <CloudSync />
           <Outlet />
         </AuthProvider>
         <Scripts />

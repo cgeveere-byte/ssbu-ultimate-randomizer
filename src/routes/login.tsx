@@ -68,7 +68,8 @@ function Login() {
               ))}
               {error && <p className="mt-1 text-sm text-danger">{error}</p>}
               <p className="mt-2 text-center text-xs text-fg-subtle">
-                Optional. The randomizer works without an account.
+                Profiles, weights, and matchup scores save to your account.
+                Signed out, they stay in this browser only.
               </p>
             </div>
           ) : (

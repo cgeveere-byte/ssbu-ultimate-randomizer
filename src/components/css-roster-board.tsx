@@ -8,7 +8,7 @@ import {
 } from "@/lib/roster";
 import { PortraitFocal } from "@/components/portrait-img";
 import { cn } from "@/lib/cn";
-import { useMemo } from "react";
+import { useMemo, type ComponentProps } from "react";
 
 export type CssMark = { id: string; color: string; label: string };
 
@@ -160,6 +160,28 @@ export function CssRosterBoard({
 }
 
 const EMPTY = new Set<string>();
+
+/** Largest 13×N board that fits the parent, so cells stay square. */
+export function CssRosterFit(props: ComponentProps<typeof CssRosterBoard>) {
+  const rows = useMemo(() => cssRosterRows(), []);
+  const n = Math.max(1, rows.length);
+  return (
+    <div
+      className="grid h-full min-h-0 w-full place-items-center"
+      style={{ containerType: "size" }}
+    >
+      <div
+        className="min-h-0 min-w-0"
+        style={{
+          width: `min(100cqw, calc(100cqh * ${CSS_COLUMNS} / ${n}))`,
+          height: `min(100cqh, calc(100cqw * ${n} / ${CSS_COLUMNS}))`,
+        }}
+      >
+        <CssRosterBoard {...props} fill className={cn("h-full w-full", props.className)} />
+      </div>
+    </div>
+  );
+}
 
 function CssTile({
   fighter,

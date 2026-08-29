@@ -75,18 +75,14 @@
   }
 
   /**
-   * Wide tiles crop vertically; square tiles don't.
-   * `--focal` is 0–1 from the top of the art. On wide boxes, that point is
-   * locked to the vertical center via object-position (container query + cqw/cqh)
-   * so eye lines stay centered at any aspect ratio.
+   * Wide tiles: PortraitFocal pins the eye line to vertical center via
+   * inline transform. Square tiles just cover.
    */
   .portrait-focal {
-    container-type: size;
     display: block;
     position: absolute;
     inset: 0;
     overflow: hidden;
-    --focal: 0.22;
   }
 
   .portrait-focal-img {
@@ -95,14 +91,6 @@
     height: 100%;
     object-fit: cover;
     object-position: 50% 50%;
-  }
-
-  @container (min-aspect-ratio: 1.05) {
-    .portrait-focal-img {
-      object-position: 50% calc(
-        (50cqh - var(--focal) * 100cqw) / (100cqh - 100cqw) * 100%
-      );
-    }
   }
 
   /** Native range, vertical: 0% (face) at the top, 100% (chest) at the bottom. */

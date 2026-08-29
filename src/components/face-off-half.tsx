@@ -281,20 +281,22 @@ export function FaceOffHalf({
           />
         )}
         <div className="relative z-30 shrink-0">{topBar}</div>
-        <div className="min-h-0 flex-1 px-[2px]">
-          <CssRosterBoard
-            used={usedSet}
-            zeroIds={zeroIds}
-            highlightId={pick?.fighter.id ?? null}
-            pulse={Boolean(pick) && revealed && !isSpinning && heroDone}
-            pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
-            dimOthers={Boolean(pick) && revealed && !isSpinning}
-            markId={showFoe ? opponentId ?? null : null}
-            markColor={foeColor.hex}
-            markLabel={`P${foeIndex + 1}`}
-            fill
-            className="h-full"
-          />
+        <div className="relative min-h-0 flex-1">
+          <div className="absolute inset-0 px-[2px]">
+            <CssRosterBoard
+              used={usedSet}
+              zeroIds={zeroIds}
+              highlightId={pick?.fighter.id ?? null}
+              pulse={Boolean(pick) && revealed && !isSpinning && heroDone}
+              pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
+              dimOthers={Boolean(pick) && revealed && !isSpinning}
+              markId={showFoe ? opponentId ?? null : null}
+              markColor={foeColor.hex}
+              markLabel={`P${foeIndex + 1}`}
+              fill
+              className="h-full"
+            />
+          </div>
         </div>
         <div className="relative z-30 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
           <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>

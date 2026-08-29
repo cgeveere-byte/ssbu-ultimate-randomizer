@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
+import { AuthProvider } from "@/lib/auth/provider";
 import { portraitUrls, preloadFighterPortraits } from "@/lib/roster";
 
 export const Route = createRootRoute({
@@ -66,7 +67,9 @@ function RootDocument() {
       </head>
       <body>
         <PortraitWarmup />
-        <Outlet />
+        <AuthProvider>
+          <Outlet />
+        </AuthProvider>
         <Scripts />
       </body>
     </html>

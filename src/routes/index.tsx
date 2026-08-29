@@ -10,6 +10,7 @@ import { HistoryPanel } from "@/components/history-panel";
 import { ProfilesPanel } from "@/components/profiles-panel";
 import { GameMode } from "@/components/game-mode";
 import { GalleryPanel } from "@/components/gallery-panel";
+import { AuthHeader } from "@/components/auth-header";
 import { ROSTER, portraitPreloadTotal } from "@/lib/roster";
 import { useRandomizerStore } from "@/lib/store";
 import { cn } from "@/lib/cn";
@@ -224,9 +225,7 @@ function Home() {
                   </p>
                 </div>
               </div>
-              <p className="hidden text-xs text-fg-subtle sm:block">
-                Profiles saved in this browser
-              </p>
+              <AuthHeader />
             </div>
           </header>
 

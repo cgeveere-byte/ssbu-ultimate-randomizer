@@ -25,7 +25,6 @@ export const Route = createRootRoute({
   head: () => {
     const host = publicShareHost();
     const ogImage = host ? `https://${host}/og.jpg` : "";
-    const xBanner = host ? `https://${host}/x-banner.jpg` : "";
     return {
       meta: [
         { charSet: "utf-8" },
@@ -45,7 +44,6 @@ export const Route = createRootRoute({
               { property: "og:image:height", content: "630" },
             ]
           : []),
-        ...(xBanner ? [{ property: "x:game:image", content: xBanner }] : []),
       ],
       links: [
         { rel: "stylesheet", href: appCss },

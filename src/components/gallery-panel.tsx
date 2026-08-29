@@ -97,6 +97,7 @@ function EyeLineEditor({
           type="button"
           disabled={!custom}
           onClick={() => resetPortraitFocusY(fighter.id)}
+          title="Restore the shipped eye line"
           className="h-9 shrink-0 rounded-[var(--radius-md)] border border-border px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40"
         >
           Reset

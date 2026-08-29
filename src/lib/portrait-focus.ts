@@ -72,8 +72,6 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   shulk: 29,
   "bowser-jr": 39,
   "duck-hunt": 49,
-  ryu: 39,
-  ken: 35,
   cloud: 47,
   corrin: 50,
   bayonetta: 30,
@@ -104,10 +102,12 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
  */
 export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {
   "diddy-kong": 2,
+  ken: 2,
   "king-dedede": 2,
   "king-k-rool": 2,
   kirby: 2,
   "little-mac": 2,
+  ryu: 2,
   terry: 2,
   yoshi: 2,
 };

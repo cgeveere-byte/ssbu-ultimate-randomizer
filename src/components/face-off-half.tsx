@@ -3,7 +3,7 @@ import { Dices, LayoutGrid, Lock, Maximize2, Minus, Plus, Star, X } from "lucide
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { QuickRollsToggle } from "@/components/quick-rolls-toggle";
-import { CssRosterFit } from "@/components/css-roster-board";
+import { CssRosterBoard } from "@/components/css-roster-board";
 import {
   ROSTER,
   computeProbabilities,
@@ -283,7 +283,7 @@ export function FaceOffHalf({
         <div className="relative z-30 shrink-0">{topBar}</div>
         <div className="relative min-h-0 flex-1">
           <div className="absolute inset-0">
-            <CssRosterFit
+            <CssRosterBoard
               used={usedSet}
               zeroIds={zeroIds}
               highlightId={pick?.fighter.id ?? null}
@@ -293,6 +293,8 @@ export function FaceOffHalf({
               markId={showFoe ? opponentId ?? null : null}
               markColor={foeColor.hex}
               markLabel={`P${foeIndex + 1}`}
+              fill
+              className="h-full w-full"
             />
           </div>
         </div>

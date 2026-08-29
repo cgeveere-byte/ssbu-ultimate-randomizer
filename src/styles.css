@@ -75,8 +75,9 @@
   }
 
   /**
-   * Wide tiles: PortraitFocal pins the eye line to vertical center via
-   * inline transform. Square tiles just cover.
+   * Wide tiles: PortraitFocal sets object-position so the eye line sits
+   * at the vertical center. Square tiles just cover. No extra transform —
+   * Face-Off P2 is already rotate(180).
    */
   .portrait-focal {
     display: block;

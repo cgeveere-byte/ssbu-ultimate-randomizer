@@ -1,10 +1,11 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { usePortraitFocusY } from "@/lib/portrait-focus";
 import { cn } from "@/lib/cn";
 
 /**
  * Pins `y%` from the top of the art to the vertical center of wide tiles.
- * Square / tall tiles show the full image (no vertical crop).
+ * Uses object-fit (no extra transform) so Face-Off’s rotate(180) P2 pane doesn’t shred crops.
+ * Square / tall tiles show the full image.
  */
 export function PortraitFocal({
   fighterId,
@@ -19,32 +20,27 @@ export function PortraitFocal({
 }) {
   const y = usePortraitFocusY(fighterId);
   const ref = useRef<HTMLSpanElement>(null);
-  const [wide, setWide] = useState(false);
+  const [objectPosition, setObjectPosition] = useState("50% 50%");
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const apply = () => {
-      const { width, height } = el.getBoundingClientRect();
-      setWide(height > 0 && width / height >= 1.05);
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      if (h <= 0 || w / h < 1.05) {
+        setObjectPosition("50% 50%");
+        return;
+      }
+      const f = y / 100;
+      const p = (0.5 * h - f * w) / (h - w);
+      setObjectPosition(`50% ${Math.max(0, Math.min(100, p * 100))}%`);
     };
     apply();
     const ro = new ResizeObserver(apply);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
-
-  const imgStyle: CSSProperties | undefined = wide
-    ? {
-        position: "absolute",
-        left: 0,
-        top: "50%",
-        width: "100%",
-        height: "auto",
-        maxWidth: "none",
-        transform: `translateY(-${y}%)`,
-      }
-    : undefined;
+  }, [y]);
 
   return (
     <span ref={ref} className="portrait-focal">
@@ -53,7 +49,7 @@ export function PortraitFocal({
         alt={alt}
         draggable={false}
         className={cn("portrait-focal-img", imgClassName)}
-        style={imgStyle}
+        style={{ objectPosition }}
       />
     </span>
   );

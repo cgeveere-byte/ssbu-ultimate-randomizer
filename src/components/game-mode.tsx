@@ -135,7 +135,9 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
     return (
       <div className="fixed inset-0 z-[80] flex flex-col bg-bg text-fg" role="dialog" aria-modal="true" aria-label="Game mode face-off">
         <div className="relative min-h-0 flex-1 overflow-hidden" style={{ transform: "rotate(180deg)" }}>
-          <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} />
+          <div className="absolute inset-0">
+            <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} />
+          </div>
         </div>
         <div className="relative z-40 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
           <div className="relative w-full">

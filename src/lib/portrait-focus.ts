@@ -64,7 +64,6 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   "mega-man": 31,
   "wii-fit-trainer": 39,
   rosalina: 36,
-  "little-mac": 43,
   greninja: 36,
   "mii-brawler": 44,
   "mii-swordfighter": 57,
@@ -91,7 +90,6 @@ export const BUILT_IN_PORTRAIT_FOCUS_Y: Readonly<Record<string, number>> = {
   joker: 51,
   hero: 33,
   "banjo-kazooie": 61,
-  terry: 24,
   byleth: 29,
   "min-min": 32,
   steve: 34,
@@ -110,6 +108,8 @@ export const PORTRAIT_ART_GEN: Readonly<Record<string, number>> = {
   "diddy-kong": 2,
   "king-dedede": 2,
   "king-k-rool": 2,
+  "little-mac": 2,
+  terry: 2,
 };
 
 function artGen(id: string): number {

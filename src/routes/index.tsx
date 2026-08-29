@@ -11,6 +11,7 @@ import { ProfilesPanel } from "@/components/profiles-panel";
 import { GameMode } from "@/components/game-mode";
 import { GalleryPanel } from "@/components/gallery-panel";
 import { AuthHeader } from "@/components/auth-header";
+import { GrokBrokerSync } from "@/components/grok-broker-sync";
 import { ROSTER, portraitPreloadTotal } from "@/lib/roster";
 import { useRandomizerStore } from "@/lib/store";
 import { cn } from "@/lib/cn";
@@ -145,6 +146,7 @@ function AppShell() {
                 Back to randomize
               </button>
             </div>
+            <GrokBrokerSync />
             <ProfilesPanel />
             <RosterPanel />
           </div>

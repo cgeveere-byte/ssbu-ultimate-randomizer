@@ -1,0 +1,9 @@
+{
+  "title": "Smash Ultimate Randomizer",
+  "description": "Random Super Smash Bros. Ultimate character picker with per-fighter weights: never pick, rare, often, and favorites.",
+  "type": "x:game",
+  "card": "custom",
+  "image": "/og.jpg",
+  "banner": "/x-banner.jpg",
+  "color": "e8c96a"
+}

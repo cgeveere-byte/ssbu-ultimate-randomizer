@@ -5,6 +5,10 @@ export const CHRIS_PROFILE_NAME = "Chris";
 export const WRISTAKER_PROFILE_ID = "wristaker";
 export const WRISTAKER_PROFILE_NAME = "Wristaker";
 
+/** Last refresh of Chris / Wristaker seed weights (from profiles export). */
+export const SEED_PROFILES_UPDATED_AT = "2026-09-02";
+export const SEED_PROFILES_UPDATED_MS = Date.parse("2026-09-02T08:30:24.246Z");
+
 /** P1 → Chris, P2 → Wristaker when a slot has no assignment. */
 export function defaultPlayerProfileId(playerIndex: number): string | null {
   if (playerIndex === 0) return CHRIS_PROFILE_ID;
@@ -48,17 +52,17 @@ export const CHRIS_WEIGHTS: Record<string, number> = {
   "dark-pit": 1,
   "zero-suit-samus": 1,
   wario: 1,
-  snake: 1,
+  snake: 0,
   ike: 1,
   "pokemon-trainer": 5,
   "diddy-kong": 0.25,
   lucas: 1,
   sonic: 1,
   "king-dedede": 1,
-  olimar: 1,
+  olimar: 0,
   lucario: 1,
   rob: 1,
-  "toon-link": 1,
+  "toon-link": 0,
   wolf: 1,
   villager: 1,
   "mega-man": 0,
@@ -72,11 +76,11 @@ export const CHRIS_WEIGHTS: Record<string, number> = {
   palutena: 1,
   "pac-man": 1,
   robin: 0,
-  shulk: 1,
+  shulk: 0.5,
   "bowser-jr": 1,
   "duck-hunt": 1,
   ryu: 0.25,
-  ken: 0.25,
+  ken: 0,
   cloud: 0,
   corrin: 2,
   bayonetta: 1,
@@ -93,7 +97,7 @@ export const CHRIS_WEIGHTS: Record<string, number> = {
   "banjo-kazooie": 5,
   terry: 1,
   byleth: 1,
-  "min-min": 1,
+  "min-min": 0,
   steve: 2,
   sephiroth: 0,
   "pyra-mythra": 2,
@@ -114,13 +118,13 @@ export const WRISTAKER_WEIGHTS: Record<string, number> = {
   luigi: 0.25,
   ness: 1,
   "captain-falcon": 5,
-  jigglypuff: 1,
+  jigglypuff: 0,
   peach: 2,
   daisy: 1,
   bowser: 5,
   "ice-climbers": 1,
   sheik: 0.25,
-  zelda: 1,
+  zelda: 0.5,
   "dr-mario": 0.25,
   pichu: 1,
   falco: 0.25,
@@ -135,7 +139,7 @@ export const WRISTAKER_WEIGHTS: Record<string, number> = {
   "meta-knight": 1,
   pit: 1,
   "dark-pit": 1,
-  "zero-suit-samus": 1,
+  "zero-suit-samus": 0,
   wario: 1,
   snake: 0.25,
   ike: 1,
@@ -154,7 +158,7 @@ export const WRISTAKER_WEIGHTS: Record<string, number> = {
   "wii-fit-trainer": 1,
   rosalina: 1,
   "little-mac": 5,
-  greninja: 1,
+  greninja: 0,
   "mii-brawler": 0.25,
   "mii-swordfighter": 1,
   "mii-gunner": 0.25,

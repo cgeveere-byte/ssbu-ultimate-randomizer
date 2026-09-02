@@ -12,6 +12,8 @@ import {
   WRISTAKER_PROFILE_ID,
   WRISTAKER_PROFILE_NAME,
   WRISTAKER_WEIGHTS,
+  SEED_PROFILES_UPDATED_AT,
+  SEED_PROFILES_UPDATED_MS,
   defaultPlayerProfileId,
 } from "./seed-profiles";
 
@@ -20,6 +22,7 @@ export {
   CHRIS_PROFILE_NAME,
   WRISTAKER_PROFILE_ID,
   WRISTAKER_PROFILE_NAME,
+  SEED_PROFILES_UPDATED_AT,
   defaultPlayerProfileId,
 } from "./seed-profiles";
 
@@ -145,7 +148,7 @@ export function makeChrisProfile(): WeightProfile {
     id: CHRIS_PROFILE_ID,
     name: CHRIS_PROFILE_NAME,
     weights: normalizeWeights(CHRIS_WEIGHTS),
-    updatedAt: 0,
+    updatedAt: SEED_PROFILES_UPDATED_MS,
   };
 }
 
@@ -154,7 +157,7 @@ export function makeWristakerProfile(): WeightProfile {
     id: WRISTAKER_PROFILE_ID,
     name: WRISTAKER_PROFILE_NAME,
     weights: normalizeWeights(WRISTAKER_WEIGHTS),
-    updatedAt: 0,
+    updatedAt: SEED_PROFILES_UPDATED_MS,
   };
 }
 
@@ -184,7 +187,7 @@ export function builtInSubtitle(id: string): string {
   if (id === CHRIS_PROFILE_ID || id === WRISTAKER_PROFILE_ID) {
     const p = makeBuiltInProfile(id);
     const n = p ? profileEligibleCount(p.weights) : 0;
-    return `Starter · ${n}/${ROSTER.length}`;
+    return `Starter · ${SEED_PROFILES_UPDATED_AT} · ${n}/${ROSTER.length}`;
   }
   return "";
 }

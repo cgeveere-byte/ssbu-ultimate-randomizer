@@ -170,7 +170,7 @@ export function FaceOffSettings({
 }
 
 export function FaceOffHalf({
-  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId,
+  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId, freestyle = false, onToggleFreestyle, onFreestylePick,
 }: {
   pick: PlayerPick | null;
   playerIndex: number;
@@ -187,6 +187,9 @@ export function FaceOffHalf({
   onToggleView: () => void;
   usedIds: readonly string[];
   opponentId?: string | null;
+  freestyle?: boolean;
+  onToggleFreestyle?: () => void;
+  onFreestylePick?: (fighterId: string) => void;
 }) {
   const pc = playerColor(playerIndex);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -267,9 +270,10 @@ export function FaceOffHalf({
         style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}
         onClick={(e) => {
           if (clickWasOnControl(e.target)) return;
+          if (freestyle) return;
           onToggleView();
         }}
-        title="Show large portrait"
+        title={freestyle ? "Tap any fighter" : "Show large portrait"}
       >
         {heroActive && pick && !heroDone && (
           <CssHeroShrink
@@ -289,16 +293,27 @@ export function FaceOffHalf({
               highlightId={pick?.fighter.id ?? null}
               pulse={Boolean(pick) && revealed && !isSpinning && heroDone}
               pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
-              dimOthers={Boolean(pick) && revealed && !isSpinning}
+              dimOthers={!freestyle && Boolean(pick) && revealed && !isSpinning}
               markId={showFoe ? opponentId ?? null : null}
               markColor={foeColor.hex}
               markLabel={`P${foeIndex + 1}`}
+              onFreestyle={
+                onToggleFreestyle && !isSpinning
+                  ? onToggleFreestyle
+                  : undefined
+              }
+              freestyleActive={freestyle}
+              onSelect={
+                freestyle && onFreestylePick && !isSpinning
+                  ? onFreestylePick
+                  : undefined
+              }
             />
           </div>
         </div>
         <div className="relative z-30 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
           <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
-            {pick ? pick.fighter.name : emptyHint}
+            {freestyle ? "Tap any fighter" : pick ? pick.fighter.name : emptyHint}
           </p>
           <div className={cn("flex shrink-0 gap-1", isSpinning && "invisible")}>
             {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {

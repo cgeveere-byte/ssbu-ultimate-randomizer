@@ -7,6 +7,7 @@ import {
   initials,
 } from "@/lib/roster";
 import { PortraitFocal } from "@/components/portrait-img";
+import { Hand } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useMemo, type ComponentProps } from "react";
 
@@ -26,6 +27,8 @@ export function CssRosterBoard({
   markLabel,
   marks,
   zeroIds,
+  onFreestyle,
+  freestyleActive = false,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
@@ -40,6 +43,8 @@ export function CssRosterBoard({
   markLabel?: string;
   marks?: CssMark[];
   zeroIds?: ReadonlySet<string>;
+  onFreestyle?: () => void;
+  freestyleActive?: boolean;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
@@ -116,6 +121,22 @@ export function CssRosterBoard({
                 const offset = Math.floor((CSS_COLUMNS - row.length) / 2);
                 const fighter = row[col - offset];
                 if (!fighter) {
+                  const lastRow = rowIndex === rows.length - 1;
+                  const lastCol = col === CSS_COLUMNS - 1;
+                  if (lastRow && lastCol && onFreestyle) {
+                    return (
+                      <li
+                        key="freestyle"
+                        className={fill ? "min-h-0 h-full" : "aspect-square"}
+                      >
+                        <FreestyleTile
+                          active={freestyleActive}
+                          fill={fill}
+                          onClick={onFreestyle}
+                        />
+                      </li>
+                    );
+                  }
                   return (
                     <li
                       key={`pad-${col}`}
@@ -318,5 +339,48 @@ function CssTile({
         </div>
       )}
     </Tag>
+  );
+}
+
+function FreestyleTile({
+  active,
+  fill,
+  onClick,
+}: {
+  active: boolean;
+  fill?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-[2px] bg-[#2c2c2c] p-0 leading-none",
+        !fill && "aspect-square w-full",
+        active
+          ? "z-[1] outline outline-2 outline-offset-[-1px] outline-amber-400"
+          : "hover:brightness-125",
+      )}
+      aria-pressed={active}
+      aria-label={active ? "Freestyle on — tap a fighter" : "Freestyle — pick anyone"}
+      title={active ? "Tap a fighter, or tap again to cancel" : "Freestyle — pick anyone"}
+    >
+      <Hand
+        className={cn(
+          "h-[42%] w-[42%] max-h-8 max-w-8",
+          active ? "text-amber-300" : "text-white/85",
+        )}
+        strokeWidth={2}
+      />
+      <span
+        className={cn(
+          "text-[7px] font-bold uppercase tracking-wider sm:text-[9px]",
+          active ? "text-amber-300" : "text-white/75",
+        )}
+      >
+        Free
+      </span>
+    </button>
   );
 }

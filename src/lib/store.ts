@@ -143,6 +143,7 @@ interface RandomizerState {
   setLastPicks: (picks: PlayerPick[]) => void;
   pushHistory: (picks: PlayerPick[]) => void;
   commitUsedPicks: (picks: PlayerPick[]) => void;
+  commitUsedForPlayer: (playerIndex: number, fighterId: string) => void;
   clearHistory: () => void;
   resetSession: () => void;
 
@@ -491,10 +492,26 @@ export const useRandomizerStore = create<RandomizerState>()(
             nextUsed[i] = (s.usedFighterIds[i] ?? []).slice();
           }
           picks.forEach((p, i) => {
+            if (!p?.fighter) return;
             if (!nextUsed[i].includes(p.fighter.id)) {
               nextUsed[i] = [...nextUsed[i], p.fighter.id];
             }
           });
+          return { usedFighterIds: nextUsed };
+        });
+      },
+
+      commitUsedForPlayer: (playerIndex, fighterId) => {
+        if (!get().uniqueOnly) return;
+        set((s) => {
+          const nextUsed = emptyUsedFighters();
+          for (let i = 0; i < 8; i++) {
+            nextUsed[i] = (s.usedFighterIds[i] ?? []).slice();
+          }
+          const i = Math.max(0, Math.min(7, playerIndex));
+          if (!nextUsed[i].includes(fighterId)) {
+            nextUsed[i] = [...nextUsed[i], fighterId];
+          }
           return { usedFighterIds: nextUsed };
         });
       },

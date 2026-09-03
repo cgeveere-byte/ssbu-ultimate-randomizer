@@ -11,6 +11,8 @@ import {
   pickWeighted,
   remapLegacyWeightMap,
   WEIGHT_PRESET_SCALE,
+  FREESTYLE_FIGHTER,
+  isFreestyleId,
 } from "./roster";
 import {
   type WeightMap,
@@ -62,6 +64,18 @@ function emptyUsedFighters(): string[][] {
   return Array.from({ length: 8 }, () => []);
 }
 
+function emptyFreestyleEnabled(): boolean[] {
+  return Array.from({ length: 8 }, () => true);
+}
+
+function withFreestyleSlot(
+  pool: { fighter: Fighter; weight: number }[],
+  enabled: boolean,
+): { fighter: Fighter; weight: number }[] {
+  if (!enabled) return pool;
+  return [...pool, { fighter: FREESTYLE_FIGHTER, weight: WEIGHT_MAP.normal }];
+}
+
 function zeroOut(
   pool: { fighter: Fighter; weight: number }[],
   blocked: Set<string>,
@@ -97,6 +111,8 @@ interface RandomizerState {
   playerCount: number;
   uniqueOnly: boolean;
   quickRolls: boolean;
+  /** Per-player: Freestyle CSS slot is in the roll pool at ×1. */
+  freestyleEnabled: boolean[];
   /** Per-player fighter ids already rolled while Unique is on. */
   usedFighterIds: string[][];
   search: string;
@@ -113,7 +129,7 @@ interface RandomizerState {
   getPool: (profileId?: string | null) => { fighter: Fighter; weight: number }[];
   getEligibleCount: (profileId?: string | null) => number;
   getPlayerProfileId: (playerIndex: number) => string;
-  canRoll: () => boolean;
+  canRoll: (allowFreestyle?: boolean) => boolean;
   isActiveReadOnly: () => boolean;
 
   setActiveProfileId: (id: string) => void;
@@ -135,6 +151,8 @@ interface RandomizerState {
   setPlayerCount: (n: number) => void;
   setUniqueOnly: (v: boolean) => void;
   setQuickRolls: (v: boolean) => void;
+  setFreestyleEnabled: (playerIndex: number, enabled: boolean) => void;
+  toggleFreestyle: (playerIndex: number) => void;
   resetUsedFighters: () => void;
   setSearch: (q: string) => void;
   setSeriesFilter: (s: string | "all") => void;
@@ -157,7 +175,7 @@ interface RandomizerState {
   recordStockGame: (game: Omit<StockGame, "id" | "at">) => void;
   clearStockSession: () => void;
 
-  roll: () => PlayerPick[];
+  roll: (allowFreestyle?: boolean) => PlayerPick[];
   importProfiles: (incoming: WeightProfile[], mode: "merge" | "replace") => number;
   getProfilesForExport: (ids?: string[]) => WeightProfile[];
   resetAllData: () => void;
@@ -194,6 +212,7 @@ export const useRandomizerStore = create<RandomizerState>()(
       playerCount: 2,
       uniqueOnly: true,
       quickRolls: false,
+      freestyleEnabled: emptyFreestyleEnabled(),
       usedFighterIds: emptyUsedFighters(),
       search: "",
       seriesFilter: "all",
@@ -243,7 +262,7 @@ export const useRandomizerStore = create<RandomizerState>()(
         );
       },
 
-      canRoll: () => {
+      canRoll: (allowFreestyle = false) => {
         const s = get();
         if (s.playerCount <= 0) return false;
         for (let i = 0; i < s.playerCount; i++) {
@@ -252,6 +271,7 @@ export const useRandomizerStore = create<RandomizerState>()(
           if (s.uniqueOnly) {
             pool = zeroOut(pool, new Set(s.usedFighterIds[i] ?? []));
           }
+          pool = withFreestyleSlot(pool, allowFreestyle && s.freestyleEnabled[i] !== false);
           if (!poolHasEligible(pool)) return false;
         }
         return true;
@@ -464,6 +484,19 @@ export const useRandomizerStore = create<RandomizerState>()(
       setPlayerCount: (n) => set({ playerCount: Math.min(8, Math.max(1, n)) }),
       setUniqueOnly: (v) => set({ uniqueOnly: v }),
       setQuickRolls: (v) => set({ quickRolls: v }),
+      setFreestyleEnabled: (playerIndex, enabled) =>
+        set((s) => {
+          const next = (s.freestyleEnabled ?? emptyFreestyleEnabled()).slice();
+          while (next.length < 8) next.push(true);
+          const i = Math.max(0, Math.min(7, playerIndex));
+          next[i] = enabled;
+          return { freestyleEnabled: next };
+        }),
+      toggleFreestyle: (playerIndex) => {
+        const s = get();
+        const cur = s.freestyleEnabled[playerIndex] !== false;
+        s.setFreestyleEnabled(playerIndex, !cur);
+      },
       resetUsedFighters: () => get().resetSession(),
       setSearch: (q) => set({ search: q }),
       setSeriesFilter: (series) => set({ seriesFilter: series }),
@@ -492,7 +525,7 @@ export const useRandomizerStore = create<RandomizerState>()(
             nextUsed[i] = (s.usedFighterIds[i] ?? []).slice();
           }
           picks.forEach((p, i) => {
-            if (!p?.fighter) return;
+            if (!p?.fighter || isFreestyleId(p.fighter.id)) return;
             if (!nextUsed[i].includes(p.fighter.id)) {
               nextUsed[i] = [...nextUsed[i], p.fighter.id];
             }
@@ -502,7 +535,7 @@ export const useRandomizerStore = create<RandomizerState>()(
       },
 
       commitUsedForPlayer: (playerIndex, fighterId) => {
-        if (!get().uniqueOnly) return;
+        if (!get().uniqueOnly || isFreestyleId(fighterId)) return;
         set((s) => {
           const nextUsed = emptyUsedFighters();
           for (let i = 0; i < 8; i++) {
@@ -525,7 +558,7 @@ export const useRandomizerStore = create<RandomizerState>()(
           stockGames: [],
         }),
 
-      roll: () => {
+      roll: (allowFreestyle = false) => {
         const s = get();
         const results: PlayerPick[] = [];
         const nextUsed = emptyUsedFighters();
@@ -540,9 +573,12 @@ export const useRandomizerStore = create<RandomizerState>()(
           if (s.uniqueOnly) {
             pool = zeroOut(pool, new Set(nextUsed[i]));
           }
+          pool = withFreestyleSlot(pool, allowFreestyle && s.freestyleEnabled[i] !== false);
           const fighter = pickWeighted(pool);
           if (!fighter) continue;
-          if (s.uniqueOnly) nextUsed[i] = [...nextUsed[i], fighter.id];
+          if (s.uniqueOnly && !isFreestyleId(fighter.id)) {
+            nextUsed[i] = [...nextUsed[i], fighter.id];
+          }
           results.push({
             fighter,
             profileId: profile.id,
@@ -619,6 +655,7 @@ export const useRandomizerStore = create<RandomizerState>()(
           playerCount: 2,
           uniqueOnly: true,
           quickRolls: false,
+          freestyleEnabled: emptyFreestyleEnabled(),
           usedFighterIds: emptyUsedFighters(),
           search: "",
           seriesFilter: "all",
@@ -711,6 +748,10 @@ export const useRandomizerStore = create<RandomizerState>()(
                     : [],
                 )
               : current.usedFighterIds,
+            freestyleEnabled: Array.from({ length: 8 }, (_, i) => {
+              const v = Array.isArray(p.freestyleEnabled) ? p.freestyleEnabled[i] : undefined;
+              return v !== false;
+            }),
             playerProfileIds: Array.from({ length: 8 }, (_, i) => {
               const existing = Array.isArray(p.playerProfileIds)
                 ? p.playerProfileIds[i]
@@ -731,6 +772,7 @@ export const useRandomizerStore = create<RandomizerState>()(
         playerCount: s.playerCount,
         uniqueOnly: s.uniqueOnly,
         quickRolls: s.quickRolls,
+        freestyleEnabled: s.freestyleEnabled,
         usedFighterIds: s.usedFighterIds,
         showBanned: s.showBanned,
         history: s.history,

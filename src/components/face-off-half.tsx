@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type RefObject } from "react";
-import { Dices, LayoutGrid, Lock, Maximize2, Minus, Plus, Star, X } from "lucide-react";
+import { Dices, Hand, LayoutGrid, Lock, Maximize2, Minus, Plus, Star, X } from "lucide-react";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { QuickRollsToggle } from "@/components/quick-rolls-toggle";
@@ -14,6 +14,7 @@ import {
   getWeightValue,
   WEIGHT_MAP,
   initials,
+  isFreestyleId,
 } from "@/lib/roster";
 import { isBuiltInProfileId } from "@/lib/profiles";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
@@ -170,7 +171,7 @@ export function FaceOffSettings({
 }
 
 export function FaceOffHalf({
-  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId, freestyle = false, onToggleFreestyle, onFreestylePick,
+  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId, freestyleInPool = true, onToggleFreestyle, onFreestylePick,
 }: {
   pick: PlayerPick | null;
   playerIndex: number;
@@ -187,14 +188,15 @@ export function FaceOffHalf({
   onToggleView: () => void;
   usedIds: readonly string[];
   opponentId?: string | null;
-  freestyle?: boolean;
+  freestyleInPool?: boolean;
   onToggleFreestyle?: () => void;
   onFreestylePick?: (fighterId: string) => void;
 }) {
   const pc = playerColor(playerIndex);
   const rootRef = useRef<HTMLDivElement>(null);
   const [heroDone, setHeroDone] = useState(true);
-  const heroActive = view === "css" && Boolean(pick) && revealed && !isSpinning;
+  const waitingFreestyle = isFreestyleId(pick?.fighter.id);
+  const heroActive = view === "css" && Boolean(pick) && revealed && !isSpinning && !waitingFreestyle;
   const heroKey = `${reelKey}-${pick?.fighter.id ?? ""}`;
 
   useEffect(() => {
@@ -270,10 +272,10 @@ export function FaceOffHalf({
         style={{ boxShadow: `inset 0 0 0 3px ${pc.hex}` }}
         onClick={(e) => {
           if (clickWasOnControl(e.target)) return;
-          if (freestyle) return;
+          if (waitingFreestyle) return;
           onToggleView();
         }}
-        title={freestyle ? "Tap any fighter" : "Show large portrait"}
+        title={waitingFreestyle ? "Tap any fighter" : "Show large portrait"}
       >
         {heroActive && pick && !heroDone && (
           <CssHeroShrink
@@ -293,7 +295,7 @@ export function FaceOffHalf({
               highlightId={pick?.fighter.id ?? null}
               pulse={Boolean(pick) && revealed && !isSpinning && heroDone}
               pulseKey={`${reelKey}-${pick?.fighter.id ?? ""}`}
-              dimOthers={!freestyle && Boolean(pick) && revealed && !isSpinning}
+              dimOthers={!waitingFreestyle && Boolean(pick) && revealed && !isSpinning}
               markId={showFoe ? opponentId ?? null : null}
               markColor={foeColor.hex}
               markLabel={`P${foeIndex + 1}`}
@@ -302,9 +304,9 @@ export function FaceOffHalf({
                   ? onToggleFreestyle
                   : undefined
               }
-              freestyleActive={freestyle}
+              freestyleInPool={freestyleInPool}
               onSelect={
-                freestyle && onFreestylePick && !isSpinning
+                waitingFreestyle && onFreestylePick && !isSpinning
                   ? onFreestylePick
                   : undefined
               }
@@ -313,7 +315,7 @@ export function FaceOffHalf({
         </div>
         <div className="relative z-30 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
           <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
-            {freestyle ? "Tap any fighter" : pick ? pick.fighter.name : emptyHint}
+            {waitingFreestyle ? "Tap any fighter" : pick ? pick.fighter.name : emptyHint}
           </p>
           <div className={cn("flex shrink-0 gap-1", isSpinning && "invisible")}>
             {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
@@ -344,7 +346,13 @@ export function FaceOffHalf({
     >
       {pick ? (
         <div key={revealed ? `final-${pick.fighter.id}` : `reel-${reelKey}-${playerIndex}`} className={cn("absolute inset-0", isSpinning && "animate-reel", revealed && "animate-result-in")}>
-          {portrait ? (
+          {waitingFreestyle ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-black">
+              <Hand className="h-16 w-16 text-amber-300" strokeWidth={1.6} />
+              <p className="text-sm font-semibold uppercase tracking-wider text-amber-300">Freestyle</p>
+              <p className="text-xs text-white/70">Switch to CSS and tap anyone</p>
+            </div>
+          ) : portrait ? (
             <PortraitFocal fighterId={pick.fighter.id} src={portrait} />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-7xl font-semibold tracking-tight text-fg" style={tile} aria-hidden>

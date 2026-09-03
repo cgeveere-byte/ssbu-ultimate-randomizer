@@ -5,6 +5,7 @@ import {
   fighterPortraitUrl,
   fighterTileStyle,
   initials,
+  FREESTYLE_ID,
 } from "@/lib/roster";
 import { PortraitFocal } from "@/components/portrait-img";
 import { Hand } from "lucide-react";
@@ -28,7 +29,7 @@ export function CssRosterBoard({
   marks,
   zeroIds,
   onFreestyle,
-  freestyleActive = false,
+  freestyleInPool = true,
 }: {
   used?: ReadonlySet<string>;
   highlightId?: string | null;
@@ -44,7 +45,8 @@ export function CssRosterBoard({
   marks?: CssMark[];
   zeroIds?: ReadonlySet<string>;
   onFreestyle?: () => void;
-  freestyleActive?: boolean;
+  /** Toggle: Freestyle is in this player's roll pool at ×1. */
+  freestyleInPool?: boolean;
 }) {
   const rows = useMemo(() => cssRosterRows(), []);
   const usedSet = used ?? EMPTY;
@@ -130,7 +132,9 @@ export function CssRosterBoard({
                         className={fill ? "min-h-0 h-full" : "aspect-square"}
                       >
                         <FreestyleTile
-                          active={freestyleActive}
+                          inPool={freestyleInPool}
+                          landed={highlightId === FREESTYLE_ID}
+                          pulse={Boolean(pulse && highlightId === FREESTYLE_ID)}
                           fill={fill}
                           onClick={onFreestyle}
                         />
@@ -343,11 +347,15 @@ function CssTile({
 }
 
 function FreestyleTile({
-  active,
+  inPool,
+  landed,
+  pulse,
   fill,
   onClick,
 }: {
-  active: boolean;
+  inPool: boolean;
+  landed: boolean;
+  pulse: boolean;
   fill?: boolean;
   onClick: () => void;
 }) {
@@ -358,25 +366,44 @@ function FreestyleTile({
       className={cn(
         "relative flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-[2px] bg-[#2c2c2c] p-0 leading-none",
         !fill && "aspect-square w-full",
-        active
-          ? "z-[1] outline outline-2 outline-offset-[-1px] outline-amber-400"
-          : "hover:brightness-125",
+        pulse && "css-flash-tile",
+        landed && !pulse && "z-[1] outline outline-2 outline-offset-[-1px] outline-amber-400",
+        !inPool && !landed && "opacity-45",
+        "hover:brightness-125",
       )}
-      aria-pressed={active}
-      aria-label={active ? "Freestyle on — tap a fighter" : "Freestyle — pick anyone"}
-      title={active ? "Tap a fighter, or tap again to cancel" : "Freestyle — pick anyone"}
+      aria-pressed={inPool}
+      aria-label={
+        landed
+          ? "Freestyle — tap a fighter"
+          : inPool
+            ? "Freestyle on — in the random pool"
+            : "Freestyle off — tap to include in the pool"
+      }
+      title={
+        landed
+          ? "Tap any fighter to pick"
+          : inPool
+            ? "Freestyle is in the pool (×1). Tap to turn off."
+            : "Tap to put Freestyle in the pool at normal odds"
+      }
     >
+      {pulse && (
+        <>
+          <span className="css-flash-wash" />
+          <span className="css-flash-shimmer" />
+        </>
+      )}
       <Hand
         className={cn(
           "h-[42%] w-[42%] max-h-8 max-w-8",
-          active ? "text-amber-300" : "text-white/85",
+          landed || pulse ? "text-amber-300" : inPool ? "text-white/85" : "text-white/50",
         )}
         strokeWidth={2}
       />
       <span
         className={cn(
           "text-[7px] font-bold uppercase tracking-wider sm:text-[9px]",
-          active ? "text-amber-300" : "text-white/75",
+          landed || pulse ? "text-amber-300" : inPool ? "text-white/75" : "text-white/45",
         )}
       >
         Free

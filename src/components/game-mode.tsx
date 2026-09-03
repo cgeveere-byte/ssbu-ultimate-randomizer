@@ -8,7 +8,7 @@ import { QuickRollsToggle, rollDurationMs } from "@/components/quick-rolls-toggl
 import { MatchupSheet, SetScoreButton } from "@/components/stock-session-panel";
 import { FaceOffHalf, FaceOffSettings } from "@/components/face-off-half";
 import { HistorySheet } from "@/components/history-panel";
-import { type Fighter, ROSTER } from "@/lib/roster";
+import { type Fighter, ROSTER, FREESTYLE_FIGHTER, FREESTYLE_ID, isFreestyleId } from "@/lib/roster";
 import { playerBadgeFg, playerColor } from "@/lib/player-colors";
 import { type PlayerPick, useRandomizerStore, requestResetSession } from "@/lib/store";
 import { playRollLock, playRollTick, unlockRollSound } from "@/lib/roll-sound";
@@ -29,6 +29,9 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const pushHistory = useRandomizerStore((s) => s.pushHistory);
   const commitUsedPicks = useRandomizerStore((s) => s.commitUsedPicks);
   const commitUsedForPlayer = useRandomizerStore((s) => s.commitUsedForPlayer);
+  const freestyleEnabled = useRandomizerStore((s) => s.freestyleEnabled);
+  const setFreestyleEnabled = useRandomizerStore((s) => s.setFreestyleEnabled);
+  const toggleFreestyle = useRandomizerStore((s) => s.toggleFreestyle);
   const roll = useRandomizerStore((s) => s.roll);
   const profiles = useRandomizerStore((s) => s.profiles);
   const activeProfileId = useRandomizerStore((s) => s.activeProfileId);
@@ -46,14 +49,12 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const [p1View, setP1View] = useState<"portrait" | "css">("css");
   const [p2View, setP2View] = useState<"portrait" | "css">("css");
   const [gmView, setGmView] = useState<"portraits" | "css">("css");
-  const [p1Freestyle, setP1Freestyle] = useState(false);
-  const [p2Freestyle, setP2Freestyle] = useState(false);
   const timers = useRef<number[]>([]);
 
   const stockGames = useRandomizerStore((s) => s.stockGames);
   const recordStockGame = useRandomizerStore((s) => s.recordStockGame);
   const active = profiles.find((p) => p.id === activeProfileId) ?? profiles[0];
-  const canRoll = useRandomizerStore((s) => s.canRoll());
+  const canRoll = useRandomizerStore((s) => s.canRoll(true));
 
   useEffect(() => { if (faceOff && playerCount !== 2) setFaceOff(false); }, [faceOff, playerCount]);
   useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); }, []);
@@ -81,15 +82,15 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
       if (used?.has(p.fighter.id)) continue;
       list.push(p.fighter);
     }
+    if (s.freestyleEnabled[playerIndex] !== false) list.push(FREESTYLE_FIGHTER);
     return list;
   }, []);
 
   const spin = useCallback(() => {
     if (isSpinning || !canRoll) return;
     saveStockResult(); setShowSettings(false); setShowMatchups(false); setShowHistory(false);
-    setP1Freestyle(false); setP2Freestyle(false);
     clearTimers(); unlockRollSound(); setSpinning(true); setRevealed(false); setP1Stocks(null); setP2Stocks(null);
-    const final = roll();
+    const final = roll(true);
     if (final.length === 0) { setSpinning(false); return; }
     const pools = final.map((_, i) => {
       const p = flashPoolFor(i);
@@ -115,7 +116,10 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
         const id = window.setTimeout(() => { requestAnimationFrame(tick); }, 16);
         timers.current.push(id);
       } else {
-        setDisplayPicks(final); setLastPicks(final); pushHistory(final); commitUsedPicks(final); setRevealed(true); setSpinning(false); playRollLock(loud);
+        setDisplayPicks(final); setLastPicks(final); commitUsedPicks(final); setRevealed(true); setSpinning(false); playRollLock(loud);
+        if (!final.some((p) => isFreestyleId(p.fighter.id))) pushHistory(final);
+        if (isFreestyleId(final[0]?.fighter.id)) setP1View("css");
+        if (isFreestyleId(final[1]?.fighter.id)) setP2View("css");
       }
     };
     setDisplayPicks(Array.from({ length: final.length }, (_, i) => ({ fighter: pickFlash(i), profileId: final[i].profileId, profileName: final[i].profileName })));
@@ -124,6 +128,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
 
   const applyFreestylePick = useCallback((playerIndex: number, fighterId: string) => {
     if (isSpinning) return;
+    if (isFreestyleId(fighterId)) return;
     const fighter = ROSTER.find((f) => f.id === fighterId);
     if (!fighter) return;
     saveStockResult();
@@ -132,23 +137,26 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
     const profile = s.getProfile(profileId);
     const nextPick: PlayerPick = { fighter, profileId: profile.id, profileName: profile.name };
     const prev = (displayPicks.length > 0 ? displayPicks : lastPicks).slice();
-    const next: (PlayerPick | undefined)[] = [prev[0], prev[1]];
+    while (prev.length < playerCount) prev.push(undefined as unknown as PlayerPick);
+    const next = prev.slice(0, Math.max(playerCount, 2));
     next[playerIndex] = nextPick;
-    const shown = next.slice(0, 2) as PlayerPick[];
-    setDisplayPicks(shown);
+    setDisplayPicks(next);
     setRevealed(true);
     setReelKey((k) => k + 1);
-    if (playerIndex === 0) { setP1Stocks(null); setP1Freestyle(false); }
-    else { setP2Stocks(null); setP2Freestyle(false); }
-    const pair = [next[0], next[1]].filter((p): p is PlayerPick => Boolean(p));
-    if (pair.length === 2 && next[0] && next[1]) {
-      setLastPicks([next[0], next[1]]);
-      pushHistory([next[0], next[1]]);
+    if (playerIndex === 0) setP1Stocks(null);
+    else if (playerIndex === 1) setP2Stocks(null);
+    const ready = next
+      .slice(0, playerCount)
+      .every((p) => p && !isFreestyleId(p.fighter.id));
+    if (ready) {
+      const pair = next.slice(0, playerCount) as PlayerPick[];
+      setLastPicks(pair);
+      pushHistory(pair);
     }
     commitUsedForPlayer(playerIndex, fighter.id);
     unlockRollSound();
     playRollLock(faceOff ? 3 : 1);
-  }, [commitUsedForPlayer, displayPicks, faceOff, isSpinning, lastPicks, pushHistory, saveStockResult, setLastPicks]);
+  }, [commitUsedForPlayer, displayPicks, faceOff, isSpinning, lastPicks, playerCount, pushHistory, saveStockResult, setLastPicks]);
 
   const shown = displayPicks.length > 0 ? displayPicks : lastPicks;
   const cols = Math.min(shown.length || playerCount, 4);
@@ -168,7 +176,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
       <div className="fixed inset-0 z-[80] flex flex-col bg-bg text-fg" role="dialog" aria-modal="true" aria-label="Game mode face-off">
         <div className="relative min-h-0 flex-1 overflow-hidden">
           <div className="absolute inset-0" style={{ transform: "rotate(180deg)" }}>
-            <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} freestyle={p2Freestyle} onToggleFreestyle={() => { if (isSpinning) return; setP2Freestyle((v) => !v); setP2View("css"); }} onFreestylePick={(id) => applyFreestylePick(1, id)} />
+            <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} freestyleInPool={freestyleEnabled[1] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(1); }} onFreestylePick={(id) => applyFreestylePick(1, id)} />
           </div>
         </div>
         <div className="relative z-40 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
@@ -192,7 +200,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
         </div>
         <div className="relative min-h-0 flex-1 overflow-hidden">
           <div className="absolute inset-0">
-            <FaceOffHalf pick={p1} playerIndex={0} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Tap Randomize" stocks={p1Stocks} onSelectStocks={selectP1Stocks} wins={p1Wins} losses={p2Wins} view={p1View} onToggleView={() => setP1View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[0] ?? []} opponentId={p2?.fighter.id ?? null} freestyle={p1Freestyle} onToggleFreestyle={() => { if (isSpinning) return; setP1Freestyle((v) => !v); setP1View("css"); }} onFreestylePick={(id) => applyFreestylePick(0, id)} />
+            <FaceOffHalf pick={p1} playerIndex={0} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Tap Randomize" stocks={p1Stocks} onSelectStocks={selectP1Stocks} wins={p1Wins} losses={p2Wins} view={p1View} onToggleView={() => setP1View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[0] ?? []} opponentId={p2?.fighter.id ?? null} freestyleInPool={freestyleEnabled[0] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(0); }} onFreestylePick={(id) => applyFreestylePick(0, id)} />
           </div>
         </div>
       </div>
@@ -215,8 +223,33 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
             <CssRosterBoard
               fill
               className="h-full"
-              marks={cssMarks}
-              dimOthers={revealed && !isSpinning && shown.length > 0}
+              marks={cssMarks.filter((m) => !isFreestyleId(m.id))}
+              highlightId={
+                shown.some((p) => isFreestyleId(p.fighter.id)) ? FREESTYLE_ID : undefined
+              }
+              dimOthers={
+                revealed &&
+                !isSpinning &&
+                shown.length > 0 &&
+                !shown.some((p) => isFreestyleId(p.fighter.id))
+              }
+              onFreestyle={
+                isSpinning
+                  ? undefined
+                  : () => {
+                      const on = freestyleEnabled[0] !== false;
+                      for (let i = 0; i < playerCount; i++) setFreestyleEnabled(i, !on);
+                    }
+              }
+              freestyleInPool={freestyleEnabled[0] !== false}
+              onSelect={
+                !isSpinning && shown.some((p) => isFreestyleId(p.fighter.id))
+                  ? (id) => {
+                      const i = shown.findIndex((p) => isFreestyleId(p.fighter.id));
+                      if (i >= 0) applyFreestylePick(i, id);
+                    }
+                  : undefined
+              }
             />
           </div>
           {shown.length > 0 && (

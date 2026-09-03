@@ -50,6 +50,19 @@ export interface Fighter {
   echo?: boolean;
 }
 
+/** CSS slot — same roll weight as an unmodified (×1) character when enabled. */
+export const FREESTYLE_ID = "__freestyle__";
+export const FREESTYLE_FIGHTER: Fighter = {
+  id: FREESTYLE_ID,
+  name: "Freestyle",
+  series: "other",
+  seriesLabel: "Any",
+  number: 0,
+};
+export function isFreestyleId(id: string | null | undefined): boolean {
+  return id === FREESTYLE_ID;
+}
+
 /** Full Super Smash Bros. Ultimate roster (86 selectable fighters). */
 export const ROSTER: Fighter[] = [
   { id: "mario", name: "Mario", series: "mario", seriesLabel: "Super Mario", number: 1 },

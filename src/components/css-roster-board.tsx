@@ -124,8 +124,8 @@ export function CssRosterBoard({
                 const fighter = row[col - offset];
                 if (!fighter) {
                   const lastRow = rowIndex === rows.length - 1;
-                  const lastCol = col === CSS_COLUMNS - 1;
-                  if (lastRow && lastCol && onFreestyle) {
+                  const afterLastFighter = col === offset + row.length;
+                  if (lastRow && afterLastFighter && onFreestyle) {
                     return (
                       <li
                         key="freestyle"

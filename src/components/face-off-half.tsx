@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type RefObject } from "react";
-import { Dices, Hand, LayoutGrid, Lock, Maximize2, Minus, Plus, Star, X } from "lucide-react";
+import { Ban, Dices, Hand, LayoutGrid, Loader2, Lock, Maximize2, Minus, Plus, Star, X } from "lucide-react";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
 import { RollSfxToggle } from "@/components/roll-sfx-toggle";
 import { QuickRollsToggle } from "@/components/quick-rolls-toggle";
@@ -28,6 +28,54 @@ const PREF_MAX = 10;
 
 function clickWasOnControl(target: EventTarget | null): boolean {
   return target instanceof Element && Boolean(target.closest("button, a, input, textarea, select, [role='button']"));
+}
+
+function FaceOffRollButton({
+  onRoll,
+  busy,
+  blocked,
+  hint,
+  className,
+}: {
+  onRoll: () => void;
+  busy: boolean;
+  blocked: boolean;
+  hint: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onRoll();
+      }}
+      disabled={busy || blocked}
+      className={cn(
+        "flex items-center justify-center gap-2.5 rounded-full",
+        "border-2 border-amber-200/45 bg-amber-400/22 text-amber-50",
+        "shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-md",
+        "transition-[transform,background-color,opacity] duration-150",
+        "hover:bg-amber-400/34 active:scale-[0.98]",
+        "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/35",
+        "disabled:pointer-events-none disabled:opacity-40",
+        className,
+      )}
+      aria-label={hint}
+      title={hint}
+    >
+      {busy ? (
+        <Loader2 className="h-10 w-10 shrink-0 animate-spin" strokeWidth={2} />
+      ) : blocked ? (
+        <Ban className="h-10 w-10 shrink-0" strokeWidth={2} />
+      ) : (
+        <Dices className="h-10 w-10 shrink-0" strokeWidth={2} />
+      )}
+      <span className="text-lg font-bold tracking-wide drop-shadow-md">
+        {busy ? "Rolling" : blocked ? "Can't roll" : "Roll"}
+      </span>
+    </button>
+  );
 }
 
 function offsetInAncestor(el: HTMLElement, ancestor: HTMLElement) {
@@ -171,7 +219,7 @@ export function FaceOffSettings({
 }
 
 export function FaceOffHalf({
-  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId, freestyleInPool = true, onToggleFreestyle, onFreestylePick,
+  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId, freestyleInPool = true, onToggleFreestyle, onFreestylePick, onRoll, rollBlocked = false, rollHint = "Randomize",
 }: {
   pick: PlayerPick | null;
   playerIndex: number;
@@ -191,6 +239,9 @@ export function FaceOffHalf({
   freestyleInPool?: boolean;
   onToggleFreestyle?: () => void;
   onFreestylePick?: (fighterId: string) => void;
+  onRoll?: () => void;
+  rollBlocked?: boolean;
+  rollHint?: string;
 }) {
   const pc = playerColor(playerIndex);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -313,20 +364,33 @@ export function FaceOffHalf({
             />
           </div>
         </div>
-        <div className="relative z-30 flex shrink-0 items-center gap-2 px-2.5 py-1.5">
-          <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
-            {waitingFreestyle ? "Tap any fighter" : pick ? pick.fighter.name : emptyHint}
-          </p>
-          <div className={cn("flex shrink-0 gap-1", isSpinning && "invisible")}>
-            {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
-              const selected = stocks === n;
-              return (
-                <button key={n} type="button" onClick={() => onSelectStocks(n)} disabled={isSpinning} className={cn("flex h-8 w-8 items-center justify-center rounded-[6px] text-sm font-bold tabular", selected ? "text-bg" : "border border-white/25 bg-black/40 text-white hover:bg-black/55")} style={selected ? { background: pc.hex, color: playerBadgeFg(playerIndex) } : undefined} aria-label={`${n} stocks left`}>
-                  {n}
-                </button>
-              );
-            })}
+        <div className="relative z-30 flex shrink-0 flex-col gap-1.5 px-2.5 pb-2 pt-1.5">
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
+              {waitingFreestyle ? "Tap any fighter" : pick ? pick.fighter.name : emptyHint}
+            </p>
+            <div className={cn("flex shrink-0 gap-1", isSpinning && "invisible")}>
+              {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
+                const selected = stocks === n;
+                return (
+                  <button key={n} type="button" onClick={() => onSelectStocks(n)} disabled={isSpinning} className={cn("flex h-8 w-8 items-center justify-center rounded-[6px] text-sm font-bold tabular", selected ? "text-bg" : "border border-white/25 bg-black/40 text-white hover:bg-black/55")} style={selected ? { background: pc.hex, color: playerBadgeFg(playerIndex) } : undefined} aria-label={`${n} stocks left`}>
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+          {onRoll && (
+            <div className="flex justify-center">
+              <FaceOffRollButton
+                onRoll={onRoll}
+                busy={isSpinning}
+                blocked={rollBlocked}
+                hint={rollHint}
+                className="h-[4.25rem] w-full max-w-sm"
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -368,7 +432,7 @@ export function FaceOffHalf({
           <p className="text-sm text-fg-muted">{emptyHint}</p>
         </div>
       )}
-      {isSpinning && (
+      {isSpinning && !onRoll && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
           <div className="h-16 w-16 rounded-full border-[3px] border-white/20 border-t-white animate-spin" />
         </div>
@@ -376,6 +440,17 @@ export function FaceOffHalf({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/70 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
       <div className="absolute inset-x-0 top-0 z-10">{topBar}</div>
+      {onRoll && (
+        <div className="absolute inset-x-0 z-20 flex justify-center px-6" style={{ bottom: pick ? "12.25rem" : "2.5rem" }}>
+          <FaceOffRollButton
+            onRoll={onRoll}
+            busy={isSpinning}
+            blocked={rollBlocked}
+            hint={rollHint}
+            className="h-[4.75rem] w-full max-w-md"
+          />
+        </div>
+      )}
       {pick && (
         <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-2 px-3 pb-2.5 pt-8">
           <div className="w-full text-center">

@@ -70,8 +70,8 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
     setP1Stocks(null); setP2Stocks(null); return true;
   }, [displayPicks, lastPicks, p1Stocks, p2Stocks, recordStockGame]);
 
-  const selectP1Stocks = (n: number) => { setP1Stocks(n); if (n > 0) setP2Stocks((prev) => (prev == null ? 0 : prev)); };
-  const selectP2Stocks = (n: number) => { setP2Stocks(n); if (n > 0) setP1Stocks((prev) => (prev == null ? 0 : prev)); };
+  const selectP1Stocks = (n: number) => setP1Stocks(n);
+  const selectP2Stocks = (n: number) => setP2Stocks(n);
 
   const flashPoolFor = useCallback((playerIndex: number): Fighter[] => {
     const s = useRandomizerStore.getState();
@@ -176,7 +176,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
       <div className="fixed inset-0 z-[80] flex flex-col bg-bg text-fg" role="dialog" aria-modal="true" aria-label="Game mode face-off">
         <div className="relative min-h-0 flex-1 overflow-hidden">
           <div className="absolute inset-0" style={{ transform: "rotate(180deg)" }}>
-            <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} freestyleInPool={freestyleEnabled[1] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(1); }} onFreestylePick={(id) => applyFreestylePick(1, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} />
+            <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} foeStocks={p1Stocks} onSelectFoeStocks={selectP1Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} freestyleInPool={freestyleEnabled[1] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(1); }} onFreestylePick={(id) => applyFreestylePick(1, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} />
           </div>
         </div>
         <div className="relative z-40 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
@@ -200,7 +200,7 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
         </div>
         <div className="relative min-h-0 flex-1 overflow-hidden">
           <div className="absolute inset-0">
-            <FaceOffHalf pick={p1} playerIndex={0} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Tap Randomize" stocks={p1Stocks} onSelectStocks={selectP1Stocks} wins={p1Wins} losses={p2Wins} view={p1View} onToggleView={() => setP1View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[0] ?? []} opponentId={p2?.fighter.id ?? null} freestyleInPool={freestyleEnabled[0] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(0); }} onFreestylePick={(id) => applyFreestylePick(0, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} />
+            <FaceOffHalf pick={p1} playerIndex={0} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Tap Randomize" stocks={p1Stocks} onSelectStocks={selectP1Stocks} foeStocks={p2Stocks} onSelectFoeStocks={selectP2Stocks} wins={p1Wins} losses={p2Wins} view={p1View} onToggleView={() => setP1View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[0] ?? []} opponentId={p2?.fighter.id ?? null} freestyleInPool={freestyleEnabled[0] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(0); }} onFreestylePick={(id) => applyFreestylePick(0, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} />
           </div>
         </div>
       </div>

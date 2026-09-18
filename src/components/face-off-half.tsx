@@ -52,7 +52,7 @@ function FaceOffRollButton({
       }}
       disabled={busy || blocked}
       className={cn(
-        "flex items-center justify-center gap-2.5 rounded-full",
+        "flex items-center justify-center gap-2 rounded-full",
         "border-2 border-amber-200/45 bg-amber-400/22 text-amber-50",
         "shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-md",
         "transition-[transform,background-color,opacity] duration-150",
@@ -65,16 +65,122 @@ function FaceOffRollButton({
       title={hint}
     >
       {busy ? (
-        <Loader2 className="h-10 w-10 shrink-0 animate-spin" strokeWidth={2} />
+        <Loader2 className="h-8 w-8 shrink-0 animate-spin" strokeWidth={2} />
       ) : blocked ? (
-        <Ban className="h-10 w-10 shrink-0" strokeWidth={2} />
+        <Ban className="h-8 w-8 shrink-0" strokeWidth={2} />
       ) : (
-        <Dices className="h-10 w-10 shrink-0" strokeWidth={2} />
+        <Dices className="h-8 w-8 shrink-0" strokeWidth={2} />
       )}
-      <span className="text-lg font-bold tracking-wide drop-shadow-md">
+      <span className="text-base font-bold tracking-wide drop-shadow-md sm:text-lg">
         {busy ? "Rolling" : blocked ? "Can't roll" : "Roll"}
       </span>
     </button>
+  );
+}
+
+function StockPickRow({
+  label,
+  color,
+  fg,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  color: string;
+  fg: string;
+  selected: number | null;
+  onSelect: (n: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">{label}</p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
+          const on = selected === n;
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onSelect(n)}
+              className={cn(
+                "flex h-12 items-center justify-center rounded-[var(--radius-md)] text-lg font-bold tabular",
+                on ? "text-bg" : "border border-white/25 bg-black/40 text-white hover:bg-black/55",
+              )}
+              style={on ? { background: color, color: fg } : undefined}
+              aria-pressed={on}
+              aria-label={`${label} ${n} stocks`}
+            >
+              {n}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StocksModal({
+  playerIndex,
+  myStocks,
+  foeStocks,
+  onSelectMine,
+  onSelectFoe,
+  onClose,
+}: {
+  playerIndex: number;
+  myStocks: number | null;
+  foeStocks: number | null;
+  onSelectMine: (n: number) => void;
+  onSelectFoe: (n: number) => void;
+  onClose: () => void;
+}) {
+  const me = playerColor(playerIndex);
+  const foeIndex = playerIndex === 0 ? 1 : 0;
+  const foe = playerColor(foeIndex);
+  return (
+    <div
+      className="absolute inset-0 z-50 flex items-end justify-center bg-black/60 p-3 backdrop-blur-[2px]"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Record stocks left"
+    >
+      <div
+        className="w-full max-w-sm rounded-[var(--radius-xl)] border border-white/20 bg-zinc-950/95 p-3 shadow-soft"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Stocks left</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] text-white/70 hover:bg-white/10 hover:text-white"
+            aria-label="Close stocks"
+          >
+            <X className="h-4 w-4" strokeWidth={2} />
+          </button>
+        </div>
+        <div className="flex flex-col gap-3">
+          <StockPickRow
+            label={`You · P${playerIndex + 1}`}
+            color={me.hex}
+            fg={playerBadgeFg(playerIndex)}
+            selected={myStocks}
+            onSelect={onSelectMine}
+          />
+          <StockPickRow
+            label={`Foe · P${foeIndex + 1}`}
+            color={foe.hex}
+            fg={playerBadgeFg(foeIndex)}
+            selected={foeStocks}
+            onSelect={onSelectFoe}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -219,7 +325,7 @@ export function FaceOffSettings({
 }
 
 export function FaceOffHalf({
-  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, wins, losses, view, onToggleView, usedIds, opponentId, freestyleInPool = true, onToggleFreestyle, onFreestylePick, onRoll, rollBlocked = false, rollHint = "Randomize",
+  pick, playerIndex, isSpinning, revealed, reelKey, perPlayerProfiles, emptyHint, stocks, onSelectStocks, foeStocks = null, onSelectFoeStocks, wins, losses, view, onToggleView, usedIds, opponentId, freestyleInPool = true, onToggleFreestyle, onFreestylePick, onRoll, rollBlocked = false, rollHint = "Randomize",
 }: {
   pick: PlayerPick | null;
   playerIndex: number;
@@ -230,6 +336,8 @@ export function FaceOffHalf({
   emptyHint: string;
   stocks: number | null;
   onSelectStocks: (n: number) => void;
+  foeStocks?: number | null;
+  onSelectFoeStocks?: (n: number) => void;
   wins: number;
   losses: number;
   view: "portrait" | "css";
@@ -246,6 +354,7 @@ export function FaceOffHalf({
   const pc = playerColor(playerIndex);
   const rootRef = useRef<HTMLDivElement>(null);
   const [heroDone, setHeroDone] = useState(true);
+  const [stocksOpen, setStocksOpen] = useState(false);
   const waitingFreestyle = isFreestyleId(pick?.fighter.id);
   const heroActive = view === "css" && Boolean(pick) && revealed && !isSpinning && !waitingFreestyle;
   const heroKey = `${reelKey}-${pick?.fighter.id ?? ""}`;
@@ -254,6 +363,9 @@ export function FaceOffHalf({
     if (heroActive) setHeroDone(false);
     else setHeroDone(true);
   }, [heroActive, heroKey]);
+  useEffect(() => {
+    if (isSpinning) setStocksOpen(false);
+  }, [isSpinning]);
   const profiles = useRandomizerStore((s) => s.profiles);
   const nudge = useRandomizerStore((s) => s.nudgePlayerFighterWeight);
   const liveProfileId = useRandomizerStore((s) => s.getPlayerProfileId(playerIndex));
@@ -299,20 +411,57 @@ export function FaceOffHalf({
     </div>
   );
 
-  const stocksRow = !isSpinning && (
-    <div className="w-full max-w-sm">
-      <p className="mb-1 text-center text-[10px] font-medium uppercase tracking-wide text-white/60">Stocks left</p>
-      <div className="grid grid-cols-4 gap-1.5">
-        {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
-          const selected = stocks === n;
-          return (
-            <button key={n} type="button" onClick={() => onSelectStocks(n)} className={cn("flex h-11 items-center justify-center rounded-[var(--radius-md)] text-lg font-bold tabular backdrop-blur-sm", selected ? "text-bg" : "border border-white/25 bg-black/40 text-white hover:bg-black/55")} style={selected ? { background: pc.hex, color: playerBadgeFg(playerIndex) } : undefined}>
-              {n}
-            </button>
-          );
-        })}
-      </div>
+  const stocksLabel =
+    stocks != null && foeStocks != null
+      ? `${stocks}–${foeStocks}`
+      : stocks != null
+        ? `${stocks}–?`
+        : "Stocks";
+
+  const rollAndStocks = (
+    <div className="flex w-full max-w-sm items-stretch gap-1.5">
+      {onRoll && (
+        <FaceOffRollButton
+          onRoll={onRoll}
+          busy={isSpinning}
+          blocked={rollBlocked}
+          hint={rollHint}
+          className="h-14 min-w-0 basis-2/3"
+        />
+      )}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isSpinning) setStocksOpen(true);
+        }}
+        disabled={isSpinning}
+        className={cn(
+          "flex h-14 min-w-0 basis-1/3 flex-col items-center justify-center rounded-full border-2 px-2",
+          "border-white/30 bg-black/40 text-white backdrop-blur-md",
+          "shadow-[0_8px_28px_rgba(0,0,0,0.4)]",
+          "hover:bg-black/55 active:scale-[0.98]",
+          "disabled:pointer-events-none disabled:opacity-40",
+          stocks != null && foeStocks != null && "border-white/55",
+        )}
+        aria-label="Record stocks left"
+        title="Record stocks left"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-white/70">Stocks</span>
+        <span className="tabular text-base font-bold leading-none">{stocksLabel === "Stocks" ? "—" : stocksLabel}</span>
+      </button>
     </div>
+  );
+
+  const stocksModal = stocksOpen && (
+    <StocksModal
+      playerIndex={playerIndex}
+      myStocks={stocks}
+      foeStocks={foeStocks}
+      onSelectMine={onSelectStocks}
+      onSelectFoe={onSelectFoeStocks ?? (() => {})}
+      onClose={() => setStocksOpen(false)}
+    />
   );
 
   if (view === "css") {
@@ -365,33 +514,12 @@ export function FaceOffHalf({
           </div>
         </div>
         <div className="relative z-30 flex shrink-0 flex-col gap-1.5 px-2.5 pb-2 pt-1.5">
-          <div className="flex items-center gap-2">
-            <p className="min-w-0 flex-1 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
-              {waitingFreestyle ? "Tap any fighter" : pick ? pick.fighter.name : emptyHint}
-            </p>
-            <div className={cn("flex shrink-0 gap-1", isSpinning && "invisible")}>
-              {Array.from({ length: STOCKS_PER_GAME + 1 }, (_, n) => {
-                const selected = stocks === n;
-                return (
-                  <button key={n} type="button" onClick={() => onSelectStocks(n)} disabled={isSpinning} className={cn("flex h-8 w-8 items-center justify-center rounded-[6px] text-sm font-bold tabular", selected ? "text-bg" : "border border-white/25 bg-black/40 text-white hover:bg-black/55")} style={selected ? { background: pc.hex, color: playerBadgeFg(playerIndex) } : undefined} aria-label={`${n} stocks left`}>
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          {onRoll && (
-            <div className="flex justify-center">
-              <FaceOffRollButton
-                onRoll={onRoll}
-                busy={isSpinning}
-                blocked={rollBlocked}
-                hint={rollHint}
-                className="h-[4.25rem] w-full max-w-sm"
-              />
-            </div>
-          )}
+          <p className="min-w-0 truncate text-left text-sm font-bold tracking-tight text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
+            {waitingFreestyle ? "Tap any fighter" : pick ? pick.fighter.name : emptyHint}
+          </p>
+          <div className="flex justify-center">{rollAndStocks}</div>
         </div>
+        {stocksModal}
       </div>
     );
   }
@@ -438,21 +566,10 @@ export function FaceOffHalf({
         </div>
       )}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/70 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
       <div className="absolute inset-x-0 top-0 z-10">{topBar}</div>
-      {onRoll && (
-        <div className="absolute inset-x-0 z-20 flex justify-center px-6" style={{ bottom: pick ? "12.25rem" : "2.5rem" }}>
-          <FaceOffRollButton
-            onRoll={onRoll}
-            busy={isSpinning}
-            blocked={rollBlocked}
-            hint={rollHint}
-            className="h-[4.75rem] w-full max-w-md"
-          />
-        </div>
-      )}
-      {pick && (
-        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-2 px-3 pb-2.5 pt-8">
+      {pick ? (
+        <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 px-3 pb-2.5 pt-8">
           <div className="w-full text-center">
             <p className="line-clamp-2 text-[1.65rem] font-bold leading-[1.05] tracking-tight text-white sm:text-4xl" style={{ textShadow: "0 2px 14px rgba(0,0,0,0.9)" }}>
               {pick.fighter.name}
@@ -479,9 +596,14 @@ export function FaceOffHalf({
               <Plus className="h-5 w-5" strokeWidth={2.4} />
             </button>
           </div>
-          {stocksRow}
+          {rollAndStocks}
+        </div>
+      ) : (
+        <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center px-3 pb-3">
+          {rollAndStocks}
         </div>
       )}
+      {stocksModal}
     </div>
   );
 }

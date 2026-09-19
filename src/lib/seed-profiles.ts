@@ -6,8 +6,8 @@ export const WRISTAKER_PROFILE_ID = "wristaker";
 export const WRISTAKER_PROFILE_NAME = "Wristaker";
 
 /** Last refresh of Chris / Wristaker seed weights (from profiles export). */
-export const SEED_PROFILES_UPDATED_AT = "2026-09-05";
-export const SEED_PROFILES_UPDATED_MS = Date.parse("2026-09-05T07:10:53.189Z");
+export const SEED_PROFILES_UPDATED_AT = "2026-09-19";
+export const SEED_PROFILES_UPDATED_MS = Date.parse("2026-09-19T00:43:55.949Z");
 
 /** P1 → Chris, P2 → Wristaker when a slot has no assignment. */
 export function defaultPlayerProfileId(playerIndex: number): string | null {
@@ -31,7 +31,7 @@ export const CHRIS_WEIGHTS: Record<string, number> = {
   "captain-falcon": 2,
   jigglypuff: 0,
   peach: 0.25,
-  daisy: 0.1,
+  daisy: 0,
   bowser: 1,
   "ice-climbers": 1,
   sheik: 1,
@@ -68,7 +68,7 @@ export const CHRIS_WEIGHTS: Record<string, number> = {
   "mega-man": 0,
   "wii-fit-trainer": 1,
   rosalina: 1,
-  "little-mac": 0.25,
+  "little-mac": 0,
   greninja: 1,
   "mii-brawler": 1,
   "mii-swordfighter": 1,
@@ -102,7 +102,7 @@ export const CHRIS_WEIGHTS: Record<string, number> = {
   sephiroth: 0,
   "pyra-mythra": 2,
   kazuya: 0.25,
-  sora: 1,
+  sora: 0,
 };
 
 export const WRISTAKER_WEIGHTS: Record<string, number> = {
@@ -129,7 +129,7 @@ export const WRISTAKER_WEIGHTS: Record<string, number> = {
   pichu: 1,
   falco: 0.25,
   marth: 1,
-  lucina: 0.25,
+  lucina: 0,
   "young-link": 1,
   ganondorf: 5,
   mewtwo: 1,
@@ -166,7 +166,7 @@ export const WRISTAKER_WEIGHTS: Record<string, number> = {
   "pac-man": 0.25,
   robin: 1,
   shulk: 0.25,
-  "bowser-jr": 1,
+  "bowser-jr": 0.5,
   "duck-hunt": 1,
   ryu: 1,
   ken: 2,
@@ -185,7 +185,7 @@ export const WRISTAKER_WEIGHTS: Record<string, number> = {
   hero: 0,
   "banjo-kazooie": 0.25,
   terry: 5,
-  byleth: 2,
+  byleth: 3,
   "min-min": 0.25,
   steve: 0,
   sephiroth: 5,

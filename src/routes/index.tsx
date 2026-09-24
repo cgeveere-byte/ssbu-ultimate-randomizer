@@ -12,6 +12,7 @@ import { GameMode } from "@/components/game-mode";
 import { GalleryPanel } from "@/components/gallery-panel";
 import { AuthHeader } from "@/components/auth-header";
 import { GrokBrokerSync } from "@/components/grok-broker-sync";
+import { APP_VERSION, CHANGELOG } from "@/lib/changelog";
 import { ROSTER, portraitPreloadTotal } from "@/lib/roster";
 import { useRandomizerStore } from "@/lib/store";
 import { cn } from "@/lib/cn";
@@ -205,6 +206,53 @@ function TabButton({
   );
 }
 
+function VersionMark() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="tabular rounded-full border border-border bg-bg-elevated px-2 py-0.5 text-[11px] font-semibold text-fg-muted hover:border-border-strong hover:text-fg"
+        aria-expanded={open}
+        aria-label={`Version ${APP_VERSION}, open changelog`}
+      >
+        v{APP_VERSION}
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-30 cursor-default bg-transparent"
+            aria-label="Close changelog"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute left-0 top-full z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft">
+            <p className="text-xs font-semibold uppercase tracking-wide text-fg-subtle">
+              Changelog
+            </p>
+            <ol className="mt-2 flex max-h-[min(24rem,60vh)] flex-col gap-3 overflow-y-auto">
+              {CHANGELOG.map((entry) => (
+                <li key={entry.version}>
+                  <p className="text-xs font-semibold text-fg">
+                    <span className="tabular">v{entry.version}</span>
+                    <span className="font-normal text-fg-subtle"> · {entry.date}</span>
+                  </p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-fg-muted">
+                    {entry.notes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Home() {
   return (
     <ClientOnly
@@ -219,9 +267,12 @@ function Home() {
                   <Dices className="h-5 w-5 text-fg" strokeWidth={1.6} />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold tracking-tight text-fg">
-                    Ultimate Randomizer
-                  </p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate text-sm font-semibold tracking-tight text-fg">
+                      Ultimate Randomizer
+                    </p>
+                    <VersionMark />
+                  </div>
                   <p className="truncate text-xs text-fg-subtle">
                     Smash Ultimate · {ROSTER.length} fighters
                   </p>

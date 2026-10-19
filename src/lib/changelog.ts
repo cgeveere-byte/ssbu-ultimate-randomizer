@@ -1,6 +1,13 @@
 /** Bump by prepending an entry. `APP_VERSION` is always the newest version. */
 export const CHANGELOG: { version: number; date: string; notes: string[] }[] = [
   {
+    version: 13,
+    date: "2026-10-18",
+    notes: [
+      "Face-Off Upright: both players right side up. Stacked in portrait, side by side in landscape.",
+    ],
+  },
+  {
     version: 12,
     date: "2026-09-24",
     notes: ["Version number in the header. Tap it for this changelog."],

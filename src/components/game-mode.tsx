@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Ban, Clock, Dices, LayoutGrid, Loader2, Maximize2, Minus, Plus, Settings, Undo2, Users, X } from "lucide-react";
+import { Ban, Clock, Columns2, Dices, LayoutGrid, Loader2, Maximize2, Minus, Plus, Rows2, Settings, Undo2, Users, X } from "lucide-react";
 import { CssRosterBoard, type CssMark } from "@/components/css-roster-board";
 import { FighterMonogram } from "@/components/fighter-tile";
 import { UniqueDupesToggle } from "@/components/unique-dupes-toggle";
@@ -41,6 +41,8 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const [revealed, setRevealed] = useState(false);
   const [reelKey, setReelKey] = useState(0);
   const [faceOff, setFaceOff] = useState(startFaceOff);
+  const [upright, setUpright] = useState(false);
+  const [landscape, setLandscape] = useState(false);
   const [p1Stocks, setP1Stocks] = useState<number | null>(null);
   const [p2Stocks, setP2Stocks] = useState<number | null>(null);
   const [showMatchups, setShowMatchups] = useState(false);
@@ -57,6 +59,18 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
   const canRoll = useRandomizerStore((s) => s.canRoll(true));
 
   useEffect(() => { if (faceOff && playerCount !== 2) setFaceOff(false); }, [faceOff, playerCount]);
+  useEffect(() => {
+    try {
+      setUpright(localStorage.getItem("ssbu-faceoff-upright") === "1");
+    } catch {
+      /* ignore */
+    }
+    const mq = window.matchMedia("(orientation: landscape)");
+    const apply = () => setLandscape(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
   useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); }, []);
   useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev; }; }, []);
 
@@ -172,37 +186,86 @@ export function GameMode({ onExit, startFaceOff = false }: { onExit: () => void;
     const canSave = p1 != null && p2 != null && p1Stocks != null && p2Stocks != null;
     const p1Wins = stockGames.filter((g) => g.p1Stocks > g.p2Stocks).length;
     const p2Wins = stockGames.filter((g) => g.p2Stocks > g.p1Stocks).length;
-    return (
-      <div className="fixed inset-0 z-[80] flex flex-col bg-bg text-fg" role="dialog" aria-modal="true" aria-label="Game mode face-off">
-        <div className="relative min-h-0 flex-1 overflow-hidden">
-          <div className="absolute inset-0" style={{ transform: "rotate(180deg)" }}>
-            <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} foeStocks={p1Stocks} onSelectFoeStocks={selectP1Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} freestyleInPool={freestyleEnabled[1] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(1); }} onFreestylePick={(id) => applyFreestylePick(1, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} />
-          </div>
+    const sideBySide = upright && landscape;
+    const rollHint = uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize";
+    const toggleUpright = () => {
+      setUpright((v) => {
+        const next = !v;
+        try { localStorage.setItem("ssbu-faceoff-upright", next ? "1" : "0"); } catch { /* ignore */ }
+        return next;
+      });
+      setShowSettings(false);
+      setShowHistory(false);
+      setShowMatchups(false);
+    };
+    const p2Pane = (
+      <div className={cn("relative min-h-0 min-w-0 flex-1 overflow-hidden", sideBySide && "border-l border-border")}>
+        <div className="absolute inset-0" style={upright ? undefined : { transform: "rotate(180deg)" }}>
+          <FaceOffHalf pick={p2} playerIndex={1} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Waiting\u2026" stocks={p2Stocks} onSelectStocks={selectP2Stocks} foeStocks={p1Stocks} onSelectFoeStocks={selectP1Stocks} wins={p2Wins} losses={p1Wins} view={p2View} onToggleView={() => setP2View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[1] ?? []} opponentId={p1?.fighter.id ?? null} freestyleInPool={freestyleEnabled[1] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(1); }} onFreestylePick={(id) => applyFreestylePick(1, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={rollHint} />
         </div>
-        <div className="relative z-40 shrink-0 border-y border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm">
+      </div>
+    );
+    const p1Pane = (
+      <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div className="absolute inset-0">
+          <FaceOffHalf pick={p1} playerIndex={0} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Tap Randomize" stocks={p1Stocks} onSelectStocks={selectP1Stocks} foeStocks={p2Stocks} onSelectFoeStocks={selectP2Stocks} wins={p1Wins} losses={p2Wins} view={p1View} onToggleView={() => setP1View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[0] ?? []} opponentId={p2?.fighter.id ?? null} freestyleInPool={freestyleEnabled[0] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(0); }} onFreestylePick={(id) => applyFreestylePick(0, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={rollHint} />
+        </div>
+      </div>
+    );
+    const bar = (
+        <div className={cn("relative z-40 shrink-0 border-border bg-bg-elevated/95 px-2 py-1 backdrop-blur-sm", sideBySide ? "border-t pb-[max(0.25rem,env(safe-area-inset-bottom))]" : "border-y")}>
           <div className="relative w-full">
-            <div className="flex min-h-12 flex-nowrap items-center justify-start gap-1">
+            <div className="flex min-h-12 flex-nowrap items-center justify-start gap-1 overflow-x-auto">
               <div className="flex min-w-0 items-center gap-1">
                 <button type="button" onClick={onExit} disabled={isSpinning} className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40" aria-label="Exit game mode"><X className="h-3.5 w-3.5" strokeWidth={2} />Exit</button>
                 <button type="button" disabled={isSpinning} onClick={() => setFaceOff(false)} className="flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border border-border bg-bg px-2.5 text-xs font-medium text-fg-muted hover:text-fg disabled:opacity-40" title="Standard layout"><Undo2 className="h-3.5 w-3.5" strokeWidth={2} />Standard</button>
+                <button type="button" disabled={isSpinning} onClick={toggleUpright} aria-pressed={upright} title={upright ? "Face each other" : "Both upright"} className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-md)] border px-2.5 text-xs font-medium disabled:opacity-40", upright ? "border-border-strong bg-bg-subtle text-fg" : "border-border bg-bg text-fg-muted hover:text-fg")}>
+                  {sideBySide ? <Columns2 className="h-3.5 w-3.5" strokeWidth={2} /> : <Rows2 className="h-3.5 w-3.5" strokeWidth={2} />}
+                  Upright
+                </button>
                 <SetScoreButton games={stockGames} onClick={() => { setShowSettings(false); setShowHistory(false); setShowMatchups((v) => !v); }} />
               </div>
-              <button type="button" onClick={spin} disabled={isSpinning || !canRoll} className={cn("roll-gold flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]", "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/30", "disabled:pointer-events-none disabled:opacity-45")} aria-label={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} title={uniqueExhausted ? "Reset unique" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} \u00b7 Roll` : "Randomize"}>
+              <button type="button" onClick={spin} disabled={isSpinning || !canRoll} className={cn("roll-gold flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] transition-[opacity,transform] duration-150 active:scale-[0.97]", "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/30", "disabled:pointer-events-none disabled:opacity-45")} aria-label={rollHint} title={uniqueExhausted ? "Reset unique" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} \u00b7 Roll` : "Randomize"}>
                 {isSpinning ? <Loader2 className="h-5 w-5 animate-spin" /> : uniqueExhausted || !canRoll ? <Ban className="h-5 w-5" /> : <Dices className="h-5 w-5" strokeWidth={2} />}
               </button>
               <button type="button" onClick={() => { setShowSettings(false); setShowMatchups(false); setShowHistory((v) => !v); }} className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border bg-bg text-fg-muted hover:text-fg", showHistory ? "border-border-strong text-fg" : "border-border")} aria-pressed={showHistory} aria-label="Recent rolls" title="Recent"><Clock className="h-4 w-4" strokeWidth={2} /></button>
               <button type="button" onClick={() => { setShowMatchups(false); setShowHistory(false); setShowSettings((v) => !v); }} className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border bg-bg text-fg-muted hover:text-fg", showSettings ? "border-border-strong text-fg" : "border-border")} aria-pressed={showSettings} aria-label="Settings" title="Sound, roll length, unique"><Settings className="h-4 w-4" strokeWidth={2} /></button>
             </div>
-            {showHistory && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div></>)}
-            {showMatchups && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { if (requestResetSession()) setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { if (requestResetSession()) setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div></>)}
-            {showSettings && (<><div className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={() => requestResetSession()} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div><div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2"><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={() => requestResetSession()} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div></>)}
+            {!upright && showHistory && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><HistorySheet onClose={() => setShowHistory(false)} /></div></div></>)}
+            {!upright && showMatchups && (<><div className="absolute bottom-full left-1/2 z-30 mb-1.5 w-[min(100%,24rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { if (requestResetSession()) setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div><div className="absolute top-full left-1/2 z-30 mt-1.5 w-[min(100%,24rem)] -translate-x-1/2"><div className="max-h-[42vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft"><MatchupSheet games={stockGames} onReset={() => { if (requestResetSession()) setShowMatchups(false); }} onClose={() => setShowMatchups(false)} /></div></div></>)}
+            {!upright && showSettings && (<><div className="absolute bottom-full left-1/2 z-20 mb-1.5 w-[min(100%,20rem)]" style={{ transform: "translateX(-50%) rotate(180deg)" }}><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={() => requestResetSession()} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div><div className="absolute top-full left-1/2 z-20 mt-1.5 w-[min(100%,20rem)] -translate-x-1/2"><FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={() => requestResetSession()} disabled={isSpinning} onClose={() => setShowSettings(false)} /></div></>)}
           </div>
         </div>
-        <div className="relative min-h-0 flex-1 overflow-hidden">
-          <div className="absolute inset-0">
-            <FaceOffHalf pick={p1} playerIndex={0} isSpinning={isSpinning} revealed={revealed} reelKey={reelKey} perPlayerProfiles={perPlayerProfiles} emptyHint="Tap Randomize" stocks={p1Stocks} onSelectStocks={selectP1Stocks} foeStocks={p2Stocks} onSelectFoeStocks={selectP2Stocks} wins={p1Wins} losses={p2Wins} view={p1View} onToggleView={() => setP1View((v) => (v === "css" ? "portrait" : "css"))} usedIds={usedFighterIds[0] ?? []} opponentId={p2?.fighter.id ?? null} freestyleInPool={freestyleEnabled[0] !== false} onToggleFreestyle={() => { if (!isSpinning) toggleFreestyle(0); }} onFreestylePick={(id) => applyFreestylePick(0, id)} onRoll={spin} rollBlocked={!canRoll} rollHint={uniqueExhausted ? "Reset unique" : !canRoll ? "No fighters" : canSave ? `Save ${p1Stocks}\u2013${p2Stocks} and roll` : "Randomize"} />
-          </div>
+    );
+    return (
+      <div className="fixed inset-0 z-[80] flex flex-col bg-bg text-fg" role="dialog" aria-modal="true" aria-label="Game mode face-off">
+        <div className={cn("flex min-h-0 flex-1", sideBySide ? "flex-row" : "flex-col")}>
+          {sideBySide ? p1Pane : p2Pane}
+          {!sideBySide && bar}
+          {sideBySide ? p2Pane : p1Pane}
         </div>
+        {sideBySide && bar}
+        {upright && showHistory && (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowHistory(false)}>
+            <div className="max-h-[70vh] w-[min(100%,24rem)] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft" onClick={(e) => e.stopPropagation()}>
+              <HistorySheet onClose={() => setShowHistory(false)} />
+            </div>
+          </div>
+        )}
+        {upright && showMatchups && (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowMatchups(false)}>
+            <div className="max-h-[70vh] w-[min(100%,24rem)] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-3 shadow-soft" onClick={(e) => e.stopPropagation()}>
+              <MatchupSheet games={stockGames} onReset={() => { if (requestResetSession()) setShowMatchups(false); }} onClose={() => setShowMatchups(false)} />
+            </div>
+          </div>
+        )}
+        {upright && showSettings && (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowSettings(false)}>
+            <div className="w-[min(100%,20rem)]" onClick={(e) => e.stopPropagation()}>
+              <FaceOffSettings uniqueOnly={uniqueOnly} onUniqueOnly={setUniqueOnly} quickRolls={quickRolls} onQuickRolls={setQuickRolls} canResetUnique={uniqueOnly && usedFighterIds.slice(0, 2).some((ids) => ids.length > 0)} onResetUnique={() => requestResetSession()} disabled={isSpinning} onClose={() => setShowSettings(false)} />
+            </div>
+          </div>
+        )}
       </div>
     );
   }

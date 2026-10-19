@@ -1,6 +1,11 @@
 /** Bump by prepending an entry. `APP_VERSION` is always the newest version. */
 export const CHANGELOG: { version: number; date: string; notes: string[] }[] = [
   {
+    version: 14,
+    date: "2026-10-19",
+    notes: ["Chris built-in weights updated. Wii Fit Trainer is now ×0.5."],
+  },
+  {
     version: 13,
     date: "2026-10-18",
     notes: [

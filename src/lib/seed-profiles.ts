@@ -6,8 +6,8 @@ export const WRISTAKER_PROFILE_ID = "wristaker";
 export const WRISTAKER_PROFILE_NAME = "Wristaker";
 
 /** Last refresh of Chris / Wristaker seed weights (from profiles export). */
-export const SEED_PROFILES_UPDATED_AT = "2026-09-19";
-export const SEED_PROFILES_UPDATED_MS = Date.parse("2026-09-19T00:43:55.949Z");
+export const SEED_PROFILES_UPDATED_AT = "2026-10-19";
+export const SEED_PROFILES_UPDATED_MS = Date.parse("2026-10-19T05:38:10.793Z");
 
 /** P1 → Chris, P2 → Wristaker when a slot has no assignment. */
 export function defaultPlayerProfileId(playerIndex: number): string | null {
@@ -66,7 +66,7 @@ export const CHRIS_WEIGHTS: Record<string, number> = {
   wolf: 1,
   villager: 1,
   "mega-man": 0,
-  "wii-fit-trainer": 1,
+  "wii-fit-trainer": 0.5,
   rosalina: 1,
   "little-mac": 0,
   greninja: 1,
